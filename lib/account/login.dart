@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// --- Shared Constants ---
 const Color primaryGreen = Color(0xFF4CAF50);
@@ -81,43 +82,64 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     try {
-      /// Manual login credentials
-      final Map<String, Map<String, String>> accounts = {
-        'donor@gmail.com': {
-          'password': 'donor123',
-          'category': 'Donor',
-          'name': 'Donor User',
-        },
-        'recipient@gmail.com': {
-          'password': 'recipient123',
-          'category': 'Recipient',
-          'name': 'Recipient User',
-        },
-        'volunteer@gmail.com': {
-          'password': 'volunteer123',
-          'category': 'Volunteer',
-          'name': 'Volunteer User',
-        },
-        'admin@gmail.com': {
-          'password': 'admin123',
-          'category': 'Admin',
-          'name': 'Admin User',
-        },
-      };
+      final supabase = Supabase.instance.client;
 
-      if (!accounts.containsKey(email) ||
-          accounts[email]!['password'] != password) {
+      // Sign in and catch any errors from Supabase
+      var res;
+      try {
+        res = await supabase.auth.signInWithPassword(
+          email: email,
+          password: password,
+        );
+      } catch (e) {
+        // ignore: avoid_print
+        print('Supabase login error: $e');
+        final err = e.toString().toLowerCase();
+        var userMsg = 'Login failed: ${e.toString()}';
+        if (err.contains('email_address_invalid') ||
+            (err.contains('invalid') && err.contains('email')) ||
+            err.contains('email address')) {
+          userMsg =
+              'Invalid email address. Try using a different email (e.g., at least 3 characters before the @) or check Supabase settings.';
+        }
         setState(() {
-          _errorMessage = 'Invalid email or password';
+          _errorMessage = userMsg;
         });
         return;
       }
 
-      final userName = accounts[email]!['name']!;
-      final userCategory = accounts[email]!['category']!;
+      final session =
+          (res != null ? res.session : null) ?? supabase.auth.currentSession;
+      if (session == null) {
+        setState(() {
+          _errorMessage =
+              'Login failed: no session returned (check email confirmation)';
+        });
+        return;
+      }
 
-      /// Save to SharedPreferences
+      final userId = session.user!.id;
+
       final prefs = await SharedPreferences.getInstance();
+
+      // Fetch profile (maybeSingle returns the row or null)
+      final profile =
+          await supabase
+                  .from('profiles')
+                  .select()
+                  .eq('id', userId)
+                  .maybeSingle()
+              as Map<String, dynamic>?;
+      if (profile == null) {
+        setState(() {
+          _errorMessage = 'Profile not found for this user';
+        });
+        return;
+      }
+
+      final userName = profile['full_name'] ?? email;
+      final userCategory = profile['category'] ?? 'Donor';
+
       await prefs.setString('userCategory', userCategory);
       await prefs.setString('userName', userName);
 

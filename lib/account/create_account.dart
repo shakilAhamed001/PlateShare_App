@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../pages/donation.dart';
+import '../pages/recepient.dart';
+import '../pages/volunteer.dart';
+import '../pages/seller.dart';
+import '../pages/admin.dart';
 
 /// A modern, attractive Create Account screen template
 class CreateAccountScreen extends StatefulWidget {
@@ -55,9 +62,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
     if (value == null || value.trim().isEmpty) {
       return 'Email is required';
     }
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(value)) {
-      return 'Please enter a valid email';
+    // More permissive regex that allows longer TLDs and modern addresses
+    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+    if (!emailRegex.hasMatch(value.trim())) {
+      return 'Please enter a valid email (e.g. name@example.com)';
     }
     return null;
   }
@@ -89,7 +97,132 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
     setState(() => _loading = true);
 
     try {
-      /// Shared Preferences
+      final supabase = Supabase.instance.client;
+      final email = _emailCtrl.text.trim().toLowerCase();
+      final password = _passCtrl.text.trim();
+
+      // Client-side sanity check (prevents common 400 from Supabase)
+      final emailCheck = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+      if (!emailCheck.hasMatch(email)) {
+        setState(() => _loading = false);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Invalid email address. Please use a valid email like name@example.com',
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Reject extremely short local parts which some Auth servers validate stricter
+      final parts = email.split('@');
+      if (parts.isEmpty || parts[0].length < 3) {
+        setState(() => _loading = false);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Email local part is too short — use at least 3 characters before the @',
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Sign up with Supabase and catch any thrown errors
+      AuthResponse? signUpRes;
+      try {
+        signUpRes = await supabase.auth.signUp(
+          email: email,
+          password: password,
+        );
+      } catch (e) {
+        // Map common Supabase messages to friendly text
+        final err = e.toString().toLowerCase();
+        var userMsg = 'Signup failed: ${e.toString()}';
+        if (err.contains('email_address_invalid') ||
+            (err.contains('invalid') && err.contains('email')) ||
+            err.contains('email address')) {
+          userMsg =
+              'Invalid email address. Try a different email (e.g., use at least 3 characters before the @) or check your Supabase email settings.';
+        } else if (err.contains('duplicate') ||
+            err.contains('already exists')) {
+          userMsg =
+              'This email is already registered. Try logging in or use a different email.';
+        }
+
+        // ignore: avoid_print
+        print('Supabase signup error: $e');
+        setState(() => _loading = false);
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(userMsg)));
+        return;
+      }
+
+      final user = signUpRes?.user ?? supabase.auth.currentUser;
+
+      if (user == null) {
+        // Signup may require email confirmation depending on Supabase settings
+        setState(() => _loading = false);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Signup initiated. Please check your email to confirm your account.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Ensure we have an active session for this user (attempt sign-in if needed)
+      if (supabase.auth.currentSession == null) {
+        try {
+          await supabase.auth.signInWithPassword(
+            email: email,
+            password: password,
+          );
+        } catch (e) {
+          // ignore: avoid_print
+          print('Supabase sign-in-after-signup error: $e');
+          setState(() => _loading = false);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Sign-in after signup failed: ${e.toString()}'),
+            ),
+          );
+          return;
+        }
+      }
+
+      // Insert profile using the authenticated user's id (so RLS policies pass)
+      final insertRes = await supabase.from('profiles').insert({
+        'id': user.id,
+        'email': email,
+        'full_name': _nameCtrl.text.trim(),
+        'phone': _phoneCtrl.text.trim(),
+        'category': _selectedCategory,
+      });
+
+      if (insertRes.error != null) {
+        setState(() => _loading = false);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Profile creation failed: ${insertRes.error!.message}',
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Save to Shared Preferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('userCategory', _selectedCategory);
       await prefs.setString('userName', _nameCtrl.text.trim());
@@ -98,22 +231,66 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created successfully!')),
+      // Show success dialog and navigate by category
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: const [
+              Icon(Icons.check_circle, color: Colors.green),
+              SizedBox(width: 8),
+              Text('Success'),
+            ],
+          ),
+          content: const Text('Account created successfully!'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Continue'),
+            ),
+          ],
+        ),
       );
-
-      await Future.delayed(const Duration(seconds: 1));
 
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(
-        context,
-        '/home',
-        arguments: {
-          'userName': _nameCtrl.text.trim(),
-          'userCategory': _selectedCategory,
-        },
-      );
+      switch (_selectedCategory) {
+        case 'Donor':
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const DonationPage()),
+          );
+          break;
+        case 'Recipient':
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const RecepientPage()),
+          );
+          break;
+        case 'Volunteer':
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const VolunteerPage()),
+          );
+          break;
+        case 'Seller':
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const SellerPage()),
+          );
+          break;
+        case 'Admin':
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const AdminPage()),
+          );
+          break;
+        default:
+          Navigator.pushReplacementNamed(
+            context,
+            '/home',
+            arguments: {
+              'userName': _nameCtrl.text.trim(),
+              'userCategory': _selectedCategory,
+            },
+          );
+      }
     } catch (e) {
       setState(() => _loading = false);
       if (!mounted) return;
