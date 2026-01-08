@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// A modern, attractive Create Account screen template
 class CreateAccountScreen extends StatefulWidget {
@@ -57,8 +55,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
     if (value == null || value.trim().isEmpty) {
       return 'Email is required';
     }
-    final emailRegex =
-        RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value)) {
       return 'Please enter a valid email';
     }
@@ -92,23 +89,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
     setState(() => _loading = true);
 
     try {
-      /// Firebase Auth
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailCtrl.text.trim(),
-        password: _passCtrl.text.trim(),
-      );
-
-      /// Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(FirebaseAuth.instance.currentUser!.uid)
-          .set({
-        'name': _nameCtrl.text.trim(),
-        'email': _emailCtrl.text.trim(),
-        'phone': _phoneCtrl.text.trim(),
-        'category': _selectedCategory,
-      });
-
       /// Shared Preferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('userCategory', _selectedCategory);
@@ -137,9 +117,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
     } catch (e) {
       setState(() => _loading = false);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -153,9 +133,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
           backgroundColor: color,
           elevation: 2,
           padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );
@@ -173,10 +151,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Color(0xFF66BB6A),
-                  Color(0xFF4CAF50),
-                ],
+                colors: [Color(0xFF66BB6A), Color(0xFF4CAF50)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -185,10 +160,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
 
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 24,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Column(
                 children: [
                   FadeTransition(
@@ -221,10 +193,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
                         Text(
                           'Join the community to share food & reduce waste',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
                         ),
                       ],
                     ),
@@ -250,19 +219,16 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
                           child: Form(
                             key: _formKey,
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.stretch,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 TextFormField(
                                   controller: _nameCtrl,
                                   validator: _validateName,
                                   decoration: InputDecoration(
-                                    prefixIcon:
-                                        const Icon(Icons.person),
+                                    prefixIcon: const Icon(Icons.person),
                                     labelText: 'Full name',
                                     border: OutlineInputBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
                                 ),
@@ -270,15 +236,14 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
                                 TextFormField(
                                   controller: _emailCtrl,
                                   validator: _validateEmail,
-                                  keyboardType:
-                                      TextInputType.emailAddress,
+                                  keyboardType: TextInputType.emailAddress,
                                   decoration: InputDecoration(
                                     prefixIcon: const Icon(
-                                        Icons.email_outlined),
+                                      Icons.email_outlined,
+                                    ),
                                     labelText: 'Email address',
                                     border: OutlineInputBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
                                 ),
@@ -289,11 +254,11 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
                                   keyboardType: TextInputType.phone,
                                   decoration: InputDecoration(
                                     prefixIcon: const Icon(
-                                        Icons.phone_android_outlined),
+                                      Icons.phone_android_outlined,
+                                    ),
                                     labelText: 'Phone',
                                     border: OutlineInputBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
                                 ),
@@ -303,12 +268,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
                                   obscureText: _obscurePass,
                                   validator: _validatePassword,
                                   decoration: InputDecoration(
-                                    prefixIcon: const Icon(
-                                        Icons.lock_outline),
+                                    prefixIcon: const Icon(Icons.lock_outline),
                                     labelText: 'Password',
                                     border: OutlineInputBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                     suffixIcon: IconButton(
                                       icon: Icon(
@@ -318,8 +281,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
                                       ),
                                       onPressed: () {
                                         setState(() {
-                                          _obscurePass =
-                                              !_obscurePass;
+                                          _obscurePass = !_obscurePass;
                                         });
                                       },
                                     ),
@@ -329,27 +291,26 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
                                 DropdownButtonFormField<String>(
                                   value: _selectedCategory,
                                   decoration: InputDecoration(
-                                    prefixIcon:
-                                        const Icon(Icons.category),
+                                    prefixIcon: const Icon(Icons.category),
                                     labelText: 'Category',
                                     border: OutlineInputBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
-                                  items: const [
-                                    'Donor',
-                                    'Recipient',
-                                    'Volunteer',
-                                    'Seller',
-                                  ]
-                                      .map(
-                                        (c) => DropdownMenuItem(
-                                          value: c,
-                                          child: Text(c),
-                                        ),
-                                      )
-                                      .toList(),
+                                  items:
+                                      const [
+                                            'Donor',
+                                            'Recipient',
+                                            'Volunteer',
+                                            'Seller',
+                                          ]
+                                          .map(
+                                            (c) => DropdownMenuItem(
+                                              value: c,
+                                              child: Text(c),
+                                            ),
+                                          )
+                                          .toList(),
                                   onChanged: (v) {
                                     setState(() {
                                       _selectedCategory = v!;
@@ -360,14 +321,11 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
                                 SizedBox(
                                   height: 54,
                                   child: ElevatedButton(
-                                    onPressed:
-                                        _loading ? null : _register,
+                                    onPressed: _loading ? null : _register,
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          const Color(0xFF4CAF50),
+                                      backgroundColor: const Color(0xFF4CAF50),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
                                     child: _loading
@@ -378,8 +336,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
                                             'Create Account',
                                             style: TextStyle(
                                               fontSize: 16,
-                                              fontWeight:
-                                                  FontWeight.bold,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
                                   ),

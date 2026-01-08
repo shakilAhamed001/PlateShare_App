@@ -44,7 +44,9 @@ class _RequestFoodPageState extends State<RequestFoodPage> {
                   margin: const EdgeInsets.all(8.0),
                   child: ListTile(
                     title: Text('Food: ${donation.source}'),
-                    subtitle: Text('Quantity: ${donation.quantity}\nLocation: ${donation.address}\nDonor: ${donation.donorId}'),
+                    subtitle: Text(
+                      'Quantity: ${donation.quantity}\nLocation: ${donation.address}\nDonor: ${donation.donorId}',
+                    ),
                     trailing: ElevatedButton(
                       onPressed: () {
                         _requestFood(donation);
@@ -65,9 +67,9 @@ class _RequestFoodPageState extends State<RequestFoodPage> {
       recipientId: recipientId,
     );
     DonationService.addRequest(request);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Food request submitted!')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Food request submitted!')));
     setState(() {});
   }
 }

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 
 import 'pages/getstarted.dart';
 import 'account/login.dart';
@@ -12,8 +10,6 @@ const Color primaryGreen = Color(0xFF4CAF50);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(const FoodShareApp());
 }

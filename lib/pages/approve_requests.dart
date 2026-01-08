@@ -25,12 +25,16 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
               itemCount: pendingRequests.length,
               itemBuilder: (context, index) {
                 FoodRequest request = pendingRequests[index];
-                Donation donation = DonationService.donations.firstWhere((d) => d.id == request.donationId);
+                Donation donation = DonationService.donations.firstWhere(
+                  (d) => d.id == request.donationId,
+                );
                 return Card(
                   margin: const EdgeInsets.all(8.0),
                   child: ListTile(
                     title: Text('Request by: ${request.recipientId}'),
-                    subtitle: Text('Food: ${donation.source}\nQuantity: ${donation.quantity}\nLocation: ${donation.address}'),
+                    subtitle: Text(
+                      'Food: ${donation.source}\nQuantity: ${donation.quantity}\nLocation: ${donation.address}',
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -39,10 +43,14 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
                             DonationService.approveRequest(request.id);
                             setState(() {});
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Request approved!')),
+                              const SnackBar(
+                                content: Text('Request approved!'),
+                              ),
                             );
                           },
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                          ),
                           child: const Text('Approve'),
                         ),
                         const SizedBox(width: 8),
@@ -51,10 +59,14 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
                             DonationService.rejectRequest(request.id);
                             setState(() {});
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Request rejected!')),
+                              const SnackBar(
+                                content: Text('Request rejected!'),
+                              ),
                             );
                           },
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
                           child: const Text('Reject'),
                         ),
                       ],

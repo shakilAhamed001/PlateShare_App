@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// --- Shared Constants ---
 const Color primaryGreen = Color(0xFF4CAF50);
@@ -83,20 +81,40 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     try {
-      /// Firebase Auth Login
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      /// Manual login credentials
+      final Map<String, Map<String, String>> accounts = {
+        'donor@gmail.com': {
+          'password': 'donor123',
+          'category': 'Donor',
+          'name': 'Donor User',
+        },
+        'recipient@gmail.com': {
+          'password': 'recipient123',
+          'category': 'Recipient',
+          'name': 'Recipient User',
+        },
+        'volunteer@gmail.com': {
+          'password': 'volunteer123',
+          'category': 'Volunteer',
+          'name': 'Volunteer User',
+        },
+        'admin@gmail.com': {
+          'password': 'admin123',
+          'category': 'Admin',
+          'name': 'Admin User',
+        },
+      };
 
-      /// Fetch user info from Firestore
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(FirebaseAuth.instance.currentUser!.uid)
-          .get();
+      if (!accounts.containsKey(email) ||
+          accounts[email]!['password'] != password) {
+        setState(() {
+          _errorMessage = 'Invalid email or password';
+        });
+        return;
+      }
 
-      final userName = userDoc.data()?['name'] ?? email;
-      final userCategory = userDoc.data()?['category'] ?? 'Donor';
+      final userName = accounts[email]!['name']!;
+      final userCategory = accounts[email]!['category']!;
 
       /// Save to SharedPreferences
       final prefs = await SharedPreferences.getInstance();

@@ -49,7 +49,9 @@ class _AdminPageState extends State<AdminPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ApproveRequestsPage()),
+                  MaterialPageRoute(
+                    builder: (context) => const ApproveRequestsPage(),
+                  ),
                 );
               },
             ),

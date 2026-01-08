@@ -44,7 +44,12 @@ class _SellerPageState extends State<SellerPage> {
 
   List<Map<String, dynamic>> sales = [
     {'product': 'Rice', 'quantity': 10, 'total': 500.0, 'date': '2024-01-01'},
-    {'product': 'Wheat Flour', 'quantity': 5, 'total': 150.0, 'date': '2024-01-02'},
+    {
+      'product': 'Wheat Flour',
+      'quantity': 5,
+      'total': 150.0,
+      'date': '2024-01-02',
+    },
   ];
 
   void _addProduct() {
@@ -53,13 +58,15 @@ class _SellerPageState extends State<SellerPage> {
       builder: (context) => AddEditProductDialog(
         onSave: (product) {
           setState(() {
-            products.add(Product(
-              id: DateTime.now().millisecondsSinceEpoch.toString(),
-              name: product['name'],
-              description: product['description'],
-              price: product['price'],
-              stock: product['stock'],
-            ));
+            products.add(
+              Product(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                name: product['name'],
+                description: product['description'],
+                price: product['price'],
+                stock: product['stock'],
+              ),
+            );
           });
         },
       ),
@@ -168,10 +175,15 @@ class _SellerPageState extends State<SellerPage> {
               itemBuilder: (context, index) {
                 final product = products[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: ListTile(
                     title: Text(product.name),
-                    subtitle: Text('${product.description}\nPrice: \$${product.price} | Stock: ${product.stock}'),
+                    subtitle: Text(
+                      '${product.description}\nPrice: \$${product.price} | Stock: ${product.stock}',
+                    ),
                     isThreeLine: true,
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -215,9 +227,15 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.product?.name ?? '');
-    _descriptionController = TextEditingController(text: widget.product?.description ?? '');
-    _priceController = TextEditingController(text: widget.product?.price.toString() ?? '');
-    _stockController = TextEditingController(text: widget.product?.stock.toString() ?? '');
+    _descriptionController = TextEditingController(
+      text: widget.product?.description ?? '',
+    );
+    _priceController = TextEditingController(
+      text: widget.product?.price.toString() ?? '',
+    );
+    _stockController = TextEditingController(
+      text: widget.product?.stock.toString() ?? '',
+    );
   }
 
   @override
@@ -290,10 +308,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        ElevatedButton(
-          onPressed: _save,
-          child: const Text('Save'),
-        ),
+        ElevatedButton(onPressed: _save, child: const Text('Save')),
       ],
     );
   }

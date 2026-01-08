@@ -33,7 +33,9 @@ class _RecepientPageState extends State<RecepientPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const RequestFoodPage()),
+                  MaterialPageRoute(
+                    builder: (context) => const RequestFoodPage(),
+                  ),
                 );
               },
             ),
