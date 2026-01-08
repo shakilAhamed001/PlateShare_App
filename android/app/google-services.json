@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "443760337202",
+    "project_id": "plateshare-9ce71",
+    "storage_bucket": "plateshare-9ce71.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:443760337202:android:deafec15c22fd6a3cc372b",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "443760337202-rs5kdu9k3jcj4ct7m1mcohnql0evcnv9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAla9E19eMD8XQn2Nu7G2a92lF5YzDIBTs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "443760337202-rs5kdu9k3jcj4ct7m1mcohnql0evcnv9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
