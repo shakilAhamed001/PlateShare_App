@@ -5,6 +5,7 @@ import 'account/login.dart';
 import 'account/create_account.dart';
 import 'account/forgot_password.dart';
 import 'pages/home_page.dart';
+import 'pages/admin.dart';
 
 const Color primaryGreen = Color(0xFF4CAF50);
 
@@ -12,8 +13,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
-    url: 'https://nbwcrdzpwvvicmgnycil.supabase.co',
-    anonKey: 'sb_publishable_Xcv__GuilUQZFTvmGmjodQ_73cnrpyj',
+    url: 'https://mhyvwiztrsmjfgdiixga.supabase.co',
+    anonKey: 'sb_publishable_yFTQXDAqGLlZOywu3RzG6Q_FZNwKCl-',
   );
 
   runApp(const FoodShareApp());
@@ -50,6 +51,9 @@ class FoodShareApp extends StatelessWidget {
               userCategory: args?['userCategory'] ?? 'Donor',
             ),
           );
+        }
+        if (settings.name == '/admin') {
+          return MaterialPageRoute(builder: (context) => const AdminPage());
         }
         return null;
       },
