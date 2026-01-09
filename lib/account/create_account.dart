@@ -165,64 +165,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
 
       final user = signUpRes?.user ?? supabase.auth.currentUser;
 
-      if (user == null) {
-        // Signup may require email confirmation depending on Supabase settings
-        setState(() => _loading = false);
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Signup initiated. Please check your email to confirm your account.',
-            ),
-          ),
-        );
-        return;
-      }
-
-      // Ensure we have an active session for this user (attempt sign-in if needed)
-      if (supabase.auth.currentSession == null) {
-        try {
-          await supabase.auth.signInWithPassword(
-            email: email,
-            password: password,
-          );
-        } catch (e) {
-          // ignore: avoid_print
-          print('Supabase sign-in-after-signup error: $e');
-          setState(() => _loading = false);
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Sign-in after signup failed: ${e.toString()}'),
-            ),
-          );
-          return;
-        }
-      }
-
-      // Insert profile using the authenticated user's id (so RLS policies pass)
-      final insertRes = await supabase.from('profiles').insert({
-        'id': user.id,
-        'email': email,
-        'full_name': _nameCtrl.text.trim(),
-        'phone': _phoneCtrl.text.trim(),
-        'category': _selectedCategory,
-      });
-
-      if (insertRes.error != null) {
-        setState(() => _loading = false);
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Profile creation failed: ${insertRes.error!.message}',
-            ),
-          ),
-        );
-        return;
-      }
-
-      // Save to Shared Preferences
+      // Always save the chosen display name and category locally —
+      // we'll create the server-side profile at first successful login instead.
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('userCategory', _selectedCategory);
       await prefs.setString('userName', _nameCtrl.text.trim());
@@ -231,7 +175,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
 
       if (!mounted) return;
 
-      // Show success dialog and navigate by category
+      // Inform the user and send them to the login screen to complete sign-in.
       await showDialog(
         context: context,
         barrierDismissible: false,
@@ -243,7 +187,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
               Text('Success'),
             ],
           ),
-          content: const Text('Account created successfully!'),
+          content: const Text('Account created successfully! Please sign in.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -255,42 +199,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
 
       if (!mounted) return;
 
-      switch (_selectedCategory) {
-        case 'Donor':
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const DonationPage()),
-          );
-          break;
-        case 'Recipient':
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const RecepientPage()),
-          );
-          break;
-        case 'Volunteer':
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const VolunteerPage()),
-          );
-          break;
-        case 'Seller':
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const SellerPage()),
-          );
-          break;
-        case 'Admin':
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const AdminPage()),
-          );
-          break;
-        default:
-          Navigator.pushReplacementNamed(
-            context,
-            '/home',
-            arguments: {
-              'userName': _nameCtrl.text.trim(),
-              'userCategory': _selectedCategory,
-            },
-          );
-      }
+      Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
       setState(() => _loading = false);
       if (!mounted) return;

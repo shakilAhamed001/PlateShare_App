@@ -130,15 +130,61 @@ class _LoginPageState extends State<LoginPage> {
                   .eq('id', userId)
                   .maybeSingle()
               as Map<String, dynamic>?;
+
       if (profile == null) {
-        setState(() {
-          _errorMessage = 'Profile not found for this user';
-        });
-        return;
+        // Try to create the profile on first successful login using any locally saved values.
+        final prefsLocal = await SharedPreferences.getInstance();
+        final savedName = prefsLocal.getString('userName') ?? email;
+        final savedCategory = prefsLocal.getString('userCategory') ?? 'Donor';
+
+        try {
+          final inserted =
+              await supabase
+                      .from('profiles')
+                      .insert({
+                        'id': userId,
+                        'email': email,
+                        'full_name': savedName,
+                        'category': savedCategory,
+                      })
+                      .select()
+                      .maybeSingle()
+                  as Map<String, dynamic>?;
+
+          if (inserted == null) {
+            setState(() {
+              _errorMessage = 'Profile not found and creation failed.';
+            });
+            return;
+          }
+
+          final userName = (inserted['full_name'] ?? savedName) as String;
+          final userCategory =
+              (inserted['category'] ?? savedCategory) as String;
+
+          await prefsLocal.setString('userCategory', userCategory);
+          await prefsLocal.setString('userName', userName);
+
+          if (!mounted) return;
+
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/home',
+            (route) => false,
+            arguments: {'userName': userName, 'userCategory': userCategory},
+          );
+
+          return;
+        } catch (e) {
+          setState(() {
+            _errorMessage = 'Profile creation failed: $e';
+          });
+          return;
+        }
       }
 
-      final userName = profile['full_name'] ?? email;
-      final userCategory = profile['category'] ?? 'Donor';
+      final userName = (profile['full_name'] ?? email) as String;
+      final userCategory = (profile['category'] ?? 'Donor') as String;
 
       await prefs.setString('userCategory', userCategory);
       await prefs.setString('userName', userName);
