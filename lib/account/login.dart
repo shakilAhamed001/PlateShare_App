@@ -185,18 +185,51 @@ class _LoginPageState extends State<LoginPage> {
 
       final userName = (profile['full_name'] ?? email) as String;
       final userCategory = (profile['category'] ?? 'Donor') as String;
+      final isAdmin = profile['is_admin'] as bool? ?? false;
 
       await prefs.setString('userCategory', userCategory);
       await prefs.setString('userName', userName);
+      await prefs.setBool('isAdmin', isAdmin);
 
       if (!mounted) return;
 
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/home',
-        (route) => false,
-        arguments: {'userName': userName, 'userCategory': userCategory},
-      );
+      // Route to admin dashboard if user is admin
+      if (isAdmin) {
+        // Verify admin password: prefer server-stored `admin_password` in profile;
+        // fallback to a fixed constant (change this before production).
+        final profileAdminPassword = profile['admin_password'] as String?;
+        const fallbackAdminPassword = 'admin123';
+
+        if (profileAdminPassword != null) {
+          if (password != profileAdminPassword) {
+            setState(() {
+              _errorMessage = 'Admin password is incorrect.';
+            });
+            return;
+          }
+        } else {
+          if (password != fallbackAdminPassword) {
+            setState(() {
+              _errorMessage = 'Admin password is incorrect.';
+            });
+            return;
+          }
+        }
+
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/admin',
+          (route) => false,
+          arguments: {'userName': userName},
+        );
+      } else {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/home',
+          (route) => false,
+          arguments: {'userName': userName, 'userCategory': userCategory},
+        );
+      }
     } catch (e) {
       setState(() {
         _errorMessage = 'Login failed: $e';
