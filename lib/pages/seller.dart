@@ -1,4 +1,48 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+// Helper widget for cross-platform image display
+Widget buildProductImage(String? imagePath, {double width = 56, double height = 56}) {
+  if (imagePath == null || imagePath.isEmpty) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: const Icon(Icons.photo, color: Colors.grey),
+    );
+  }
+
+  if (kIsWeb) {
+    // On web, show placeholder since web can't use Image.file()
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.blue[100],
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: const Center(
+        child: Icon(Icons.cloud_upload, color: Colors.blue),
+      ),
+    );
+  }
+
+  // On native platforms, show the actual image
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(6),
+    child: Image.file(
+      File(imagePath),
+      width: width,
+      height: height,
+      fit: BoxFit.cover,
+    ),
+  );
+}
 
 // Simple Product Model
 class Product {
@@ -7,6 +51,7 @@ class Product {
   String description;
   double price;
   int stock;
+  String? imagePath; // optional local path or URL
 
   Product({
     required this.id,
@@ -14,8 +59,9 @@ class Product {
     required this.description,
     required this.price,
     required this.stock,
+    this.imagePath,
   });
-}
+} 
 
 class SellerPage extends StatefulWidget {
   const SellerPage({super.key});
@@ -65,6 +111,7 @@ class _SellerPageState extends State<SellerPage> {
                 description: product['description'],
                 price: product['price'],
                 stock: product['stock'],
+                imagePath: product['imagePath'],
               ),
             );
           });
@@ -84,6 +131,7 @@ class _SellerPageState extends State<SellerPage> {
             product.description = updatedProduct['description'];
             product.price = updatedProduct['price'];
             product.stock = updatedProduct['stock'];
+            product.imagePath = updatedProduct['imagePath'];
           });
         },
       ),
@@ -116,23 +164,55 @@ class _SellerPageState extends State<SellerPage> {
   }
 
   void _viewSales() {
+    // Aggregate sales by product
+    final Map<String, Map<String, dynamic>> agg = {};
+    for (final sale in sales) {
+      final name = sale['product'] as String;
+      final qty = sale['quantity'] as int;
+      final total = (sale['total'] as num).toDouble();
+      if (!agg.containsKey(name)) {
+        agg[name] = {
+          'quantity': qty,
+          'total': total,
+        };
+      } else {
+        agg[name]!['quantity'] += qty;
+        agg[name]!['total'] += total;
+      }
+    }
+
+    final entries = agg.entries.toList();
+    entries.sort((a, b) => (b.value['total'] as double).compareTo(a.value['total'] as double));
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Sales View'),
+        title: const Text('Sales Report'),
         content: SizedBox(
           width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: sales.length,
-            itemBuilder: (context, index) {
-              final sale = sales[index];
-              return ListTile(
-                title: Text('${sale['product']} - ${sale['quantity']} units'),
-                subtitle: Text('Total: \$${sale['total']} on ${sale['date']}'),
-              );
-            },
-          ),
+          child: entries.isEmpty
+              ? const Text('No sales yet')
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: entries.length,
+                  itemBuilder: (context, index) {
+                    final entry = entries[index];
+                    final pname = entry.key;
+                    final qty = entry.value['quantity'];
+                    final total = entry.value['total'];
+                    // find product image if available
+                    final prod = products.firstWhere(
+                      (p) => p.name == pname,
+                      orElse: () => Product(id: '', name: pname, description: '', price: 0, stock: 0),
+                    );
+
+                    return ListTile(
+                      leading: buildProductImage(prod.imagePath, width: 48, height: 48),
+                      title: Text(pname),
+                      subtitle: Text('Units sold: $qty  •  Revenue: \$$total'),
+                    );
+                  },
+                ),
         ),
         actions: [
           TextButton(
@@ -180,6 +260,7 @@ class _SellerPageState extends State<SellerPage> {
                     vertical: 8,
                   ),
                   child: ListTile(
+                    leading: buildProductImage(product.imagePath),
                     title: Text(product.name),
                     subtitle: Text(
                       '${product.description}\nPrice: \$${product.price} | Stock: ${product.stock}',
@@ -222,6 +303,8 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
   late TextEditingController _stockController;
+  final ImagePicker _picker = ImagePicker();
+  XFile? _pickedImage;
 
   @override
   void initState() {
@@ -236,6 +319,9 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     _stockController = TextEditingController(
       text: widget.product?.stock.toString() ?? '',
     );
+    if (widget.product?.imagePath != null) {
+      _pickedImage = XFile(widget.product!.imagePath!);
+    }
   }
 
   @override
@@ -247,6 +333,15 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (image != null) {
+      setState(() {
+        _pickedImage = image;
+      });
+    }
+  }
+
   void _save() {
     if (_formKey.currentState!.validate()) {
       widget.onSave({
@@ -254,6 +349,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
         'description': _descriptionController.text,
         'price': double.parse(_priceController.text),
         'stock': int.parse(_stockController.text),
+        'imagePath': _pickedImage?.path ?? widget.product?.imagePath,
       });
       Navigator.pop(context);
     }
@@ -278,6 +374,21 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                 controller: _descriptionController,
                 decoration: const InputDecoration(labelText: 'Description'),
                 validator: (value) => value!.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 12),
+              // Image picker
+              Row(
+                children: [
+                  buildProductImage(_pickedImage?.path, width: 72, height: 72),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.upload_file),
+                      label: const Text('Choose Image'),
+                    ),
+                  ),
+                ],
               ),
               TextFormField(
                 controller: _priceController,
