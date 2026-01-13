@@ -24,10 +24,7 @@ class _SettingPageState extends State<SettingPage> {
             const SizedBox(height: 20),
             const Text(
               'Settings',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 30),
             _buildSectionTitle('Display'),
@@ -111,7 +108,9 @@ class _SettingPageState extends State<SettingPage> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
-                      themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                      themeProvider.isDarkMode
+                          ? Icons.dark_mode
+                          : Icons.light_mode,
                       color: primaryGreen,
                       size: 24,
                     ),
@@ -131,7 +130,9 @@ class _SettingPageState extends State<SettingPage> {
                         themeProvider.isDarkMode ? 'Enabled' : 'Disabled',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -143,7 +144,7 @@ class _SettingPageState extends State<SettingPage> {
                 onChanged: (value) {
                   themeProvider.toggleTheme();
                 },
-                activeColor: primaryGreen,
+                activeThumbColor: primaryGreen,
               ),
             ],
           ),
@@ -183,11 +184,7 @@ class _SettingPageState extends State<SettingPage> {
                     color: primaryGreen.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(
-                    icon,
-                    color: primaryGreen,
-                    size: 24,
-                  ),
+                  child: Icon(icon, color: primaryGreen, size: 24),
                 ),
                 const SizedBox(width: 15),
                 Column(
@@ -204,7 +201,9 @@ class _SettingPageState extends State<SettingPage> {
                       subtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -235,10 +234,7 @@ class _SettingPageState extends State<SettingPage> {
         },
         child: const Text(
           'Logout',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -277,10 +273,7 @@ class _SettingPageState extends State<SettingPage> {
                 Navigator.pop(context);
                 Navigator.pushReplacementNamed(context, '/login');
               },
-              child: const Text(
-                'Logout',
-                style: TextStyle(color: Colors.red),
-              ),
+              child: const Text('Logout', style: TextStyle(color: Colors.red)),
             ),
           ],
         );

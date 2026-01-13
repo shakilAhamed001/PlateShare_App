@@ -76,7 +76,7 @@ class ThemeProvider extends ChangeNotifier {
         bodyMedium: TextStyle(color: Color(0xFFBDBDBD)),
         titleLarge: TextStyle(color: Colors.white),
       ),
-      dialogBackgroundColor: const Color(0xFF1E1E1E),
+      dialogTheme: DialogThemeData(backgroundColor: const Color(0xFF1E1E1E)),
     );
   }
 }

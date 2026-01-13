@@ -85,7 +85,7 @@ class _LoginPageState extends State<LoginPage> {
       final supabase = Supabase.instance.client;
 
       // Sign in and catch any errors from Supabase
-      var res;
+      AuthResponse res;
       try {
         res = await supabase.auth.signInWithPassword(
           email: email,
@@ -108,8 +108,7 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
-      final session =
-          (res != null ? res.session : null) ?? supabase.auth.currentSession;
+      final session = (res?.session) ?? supabase.auth.currentSession;
       if (session == null) {
         setState(() {
           _errorMessage =
@@ -123,13 +122,11 @@ class _LoginPageState extends State<LoginPage> {
       final prefs = await SharedPreferences.getInstance();
 
       // Fetch profile (maybeSingle returns the row or null)
-      final profile =
-          await supabase
-                  .from('profiles')
-                  .select()
-                  .eq('id', userId)
-                  .maybeSingle()
-              as Map<String, dynamic>?;
+      final profile = await supabase
+          .from('profiles')
+          .select()
+          .eq('id', userId)
+          .maybeSingle();
 
       if (profile == null) {
         // Try to create the profile on first successful login using any locally saved values.
@@ -138,18 +135,16 @@ class _LoginPageState extends State<LoginPage> {
         final savedCategory = prefsLocal.getString('userCategory') ?? 'Donor';
 
         try {
-          final inserted =
-              await supabase
-                      .from('profiles')
-                      .insert({
-                        'id': userId,
-                        'email': email,
-                        'full_name': savedName,
-                        'category': savedCategory,
-                      })
-                      .select()
-                      .maybeSingle()
-                  as Map<String, dynamic>?;
+          final inserted = await supabase
+              .from('profiles')
+              .insert({
+                'id': userId,
+                'email': email,
+                'full_name': savedName,
+                'category': savedCategory,
+              })
+              .select()
+              .maybeSingle();
 
           if (inserted == null) {
             setState(() {
