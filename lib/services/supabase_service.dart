@@ -22,6 +22,26 @@ class SupabaseService {
 
   // Donation operations
   static Future<void> createDonation(Donation donation) async {
+    final uid = _supabase.auth.currentUser?.id;
+    if (uid == null) throw Exception('No authenticated user');
+
+    // Ensure a donor row exists for the current user. If it already exists,
+    // ignore the duplicate-key error and continue to insert the donation.
+    try {
+      await _supabase.from('donors').insert({
+        'id': uid,
+        'name': donation.name,
+        'phone': donation.phone,
+        'address': donation.address,
+        'email': _supabase.auth.currentUser!.email,
+      });
+    } catch (e) {
+      final msg = e.toString();
+      if (!msg.contains('23505') && !msg.toLowerCase().contains('duplicate')) {
+        rethrow;
+      }
+    }
+
     await _supabase.from('donations').insert({
       'name': donation.name,
       'phone': donation.phone,
@@ -31,7 +51,7 @@ class SupabaseService {
       'ngo': donation.ngo,
       'image_urls': donation.imagePaths,
       'status': donation.status,
-      'donor_id': _supabase.auth.currentUser!.id,
+      'donor_id': uid,
     });
   }
 
