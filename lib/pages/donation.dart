@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io' show Platform, File;
 import 'package:flutter_application_2/models/donation_model.dart';
 import 'package:flutter_application_2/services/donation_service.dart';
+import 'package:flutter_application_2/services/supabase_storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // --- Shared Constants ---
@@ -378,6 +379,13 @@ class _DonationPageState extends State<DonationPage> {
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       _formKey.currentState!.save();
+                      // Upload images to Supabase Storage
+                      List<String> imageUrls = [];
+                      if (_imageFiles.isNotEmpty) {
+                        imageUrls = await SupabaseStorageService.uploadImages(
+                          _imageFiles,
+                        );
+                      }
                       // Get donor name from prefs
                       final prefs = await SharedPreferences.getInstance();
                       String donorName =
@@ -391,12 +399,10 @@ class _DonationPageState extends State<DonationPage> {
                         source: source,
                         quantity: quantity,
                         ngo: ngo,
-                        imagePaths: _imageFiles
-                            .map((file) => file.path)
-                            .toList(),
+                        imagePaths: imageUrls,
                         donorId: donorName,
                       );
-                      DonationService.addDonation(donation);
+                      await DonationService.addDonation(donation);
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(

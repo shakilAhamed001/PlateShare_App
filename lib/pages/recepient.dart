@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/pages/request_food.dart';
+import 'browse_donations.dart';
 
 class RecepientPage extends StatefulWidget {
   const RecepientPage({super.key});
@@ -44,7 +45,12 @@ class _RecepientPageState extends State<RecepientPage> {
               title: 'Browse Available Food',
               subtitle: 'Find food near you',
               onTap: () {
-                // Navigate to browse food page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BrowseDonationsPage(),
+                  ),
+                );
               },
             ),
             _buildActionCard(

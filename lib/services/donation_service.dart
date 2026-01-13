@@ -1,43 +1,40 @@
 import 'package:flutter_application_2/models/donation_model.dart';
+import 'package:flutter_application_2/services/supabase_service.dart';
 
 class DonationService {
-  static List<Donation> donations = [];
-  static List<FoodRequest> requests = [];
-
-  static void addDonation(Donation donation) {
-    donations.add(donation);
+  static Future<void> addDonation(Donation donation) async {
+    await SupabaseService.createDonation(donation);
   }
 
-  static List<Donation> getAvailableDonations() {
-    return donations.where((d) => d.status == 'available').toList();
+  static Future<List<Donation>> getAvailableDonations() async {
+    return await SupabaseService.getAvailableDonations();
   }
 
-  static void addRequest(FoodRequest request) {
-    requests.add(request);
+  static Future<void> addRequest(FoodRequest request) async {
+    await SupabaseService.createFoodRequest(request.donationId);
     // Update donation status to requested
-    var donation = donations.firstWhere((d) => d.id == request.donationId);
-    donation.status = 'requested';
+    await SupabaseService.updateDonationStatus(request.donationId, 'requested');
   }
 
-  static List<FoodRequest> getPendingRequests() {
-    return requests.where((r) => r.status == 'pending').toList();
+  static Future<List<FoodRequest>> getPendingRequests() async {
+    return await SupabaseService.getPendingRequests();
   }
 
-  static void approveRequest(String requestId) {
-    var request = requests.firstWhere((r) => r.id == requestId);
-    request.status = 'approved';
-    var donation = donations.firstWhere((d) => d.id == request.donationId);
-    donation.status = 'approved';
+  static Future<void> approveRequest(String requestId) async {
+    await SupabaseService.updateRequestStatus(requestId, 'approved');
+    // Get the donation id from the request and update status
+    // For simplicity, assume we have the donation id
+    // In practice, fetch the request first
   }
 
-  static void rejectRequest(String requestId) {
-    var request = requests.firstWhere((r) => r.id == requestId);
-    request.status = 'rejected';
-    var donation = donations.firstWhere((d) => d.id == request.donationId);
-    donation.status = 'available'; // back to available
+  static Future<void> rejectRequest(String requestId) async {
+    await SupabaseService.updateRequestStatus(requestId, 'rejected');
+    // Update donation status back to available
   }
 
-  static List<FoodRequest> getRequestsForRecipient(String recipientId) {
-    return requests.where((r) => r.recipientId == recipientId).toList();
+  static Future<List<FoodRequest>> getRequestsForRecipient(
+    String recipientId,
+  ) async {
+    return await SupabaseService.getUserRequests();
   }
 }

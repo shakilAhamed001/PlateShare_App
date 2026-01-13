@@ -47,9 +47,9 @@ class Donation {
       source: map['source'],
       quantity: map['quantity'],
       ngo: map['ngo'],
-      imagePaths: List<String>.from(map['imagePaths'] ?? []),
+      imagePaths: List<String>.from(map['image_urls'] ?? []),
       status: map['status'],
-      donorId: map['donorId'],
+      donorId: map['donor_id'] ?? map['donors']?['name'] ?? 'Unknown',
     );
   }
 }
@@ -82,10 +82,10 @@ class FoodRequest {
   factory FoodRequest.fromMap(Map<String, dynamic> map) {
     return FoodRequest(
       id: map['id'],
-      donationId: map['donationId'],
-      recipientId: map['recipientId'],
+      donationId: map['donation_id'],
+      recipientId: map['recipient_id'],
       status: map['status'],
-      requestTime: DateTime.parse(map['requestTime']),
+      requestTime: DateTime.parse(map['request_time']),
     );
   }
 }
