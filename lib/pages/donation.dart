@@ -73,13 +73,24 @@ class _DonationPageState extends State<DonationPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Select Image Source'),
+          backgroundColor: Theme.of(context).dialogBackgroundColor,
+          title: Text(
+            'Select Image Source',
+            style: TextStyle(
+              color: Theme.of(context).textTheme.titleLarge?.color,
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Gallery'),
+                title: Text(
+                  'Gallery',
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
+                ),
                 onTap: () {
                   Navigator.of(context).pop();
                   _pickImage(ImageSource.gallery);
@@ -88,16 +99,26 @@ class _DonationPageState extends State<DonationPage> {
               if (!kIsWeb && (Platform.isAndroid || Platform.isIOS))
                 ListTile(
                   leading: const Icon(Icons.camera_alt),
-                  title: const Text('Camera'),
+                  title: Text(
+                    'Camera',
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                    ),
+                  ),
                   onTap: () {
                     Navigator.of(context).pop();
                     _pickImage(ImageSource.camera);
                   },
                 ),
               if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS))
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text('Camera not supported on this platform.'),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Camera not supported on this platform.',
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                    ),
+                  ),
                 ),
             ],
           ),
