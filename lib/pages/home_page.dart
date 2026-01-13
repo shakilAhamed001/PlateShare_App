@@ -5,6 +5,7 @@ import 'admin.dart';
 import 'recepient.dart';
 import 'volunteer.dart';
 import 'seller.dart';
+import 'setting_page.dart';
 
 // --- Shared Constants ---
 const Color primaryGreen = Color(0xFF4CAF50);
@@ -27,17 +28,9 @@ class FoodShareHomePage extends StatefulWidget {
 class _FoodShareHomePageState extends State<FoodShareHomePage> {
   int _selectedIndex = 0;
 
-  late List<Widget> _pages;
-
   @override
   void initState() {
     super.initState();
-    _pages = [
-      _buildHomePage(),
-      _buildMessagePage(),
-      _buildNotificationPage(),
-      _buildSettingPage(),
-    ];
   }
 
   Widget _buildHomePage() {
@@ -56,12 +49,12 @@ class _FoodShareHomePageState extends State<FoodShareHomePage> {
                 const SizedBox(height: 20),
                 _buildImpactCard(),
                 const SizedBox(height: 30),
-                const Text(
+                Text(
                   'Quick Actions',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 15),
@@ -88,9 +81,7 @@ class _FoodShareHomePageState extends State<FoodShareHomePage> {
   }
 
   Widget _buildSettingPage() {
-    return const Center(
-      child: Text('Setting Page', style: TextStyle(fontSize: 24)),
-    );
+    return const SettingPage();
   }
 
   Widget _buildStatItem(String value, String label, Color color) {
@@ -130,9 +121,9 @@ class _FoodShareHomePageState extends State<FoodShareHomePage> {
       child: Container(
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: Colors.grey.shade300),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withValues(alpha: 0.1),
@@ -156,15 +147,18 @@ class _FoodShareHomePageState extends State<FoodShareHomePage> {
             const SizedBox(height: 10),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87,
               ),
             ),
             Text(
               subtitle,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6) ?? Colors.grey,
+              ),
             ),
           ],
         ),
@@ -612,18 +606,6 @@ class _FoodShareHomePageState extends State<FoodShareHomePage> {
           },
         },
         {
-          'icon': Icons.edit,
-          'title': 'Edit Products',
-          'subtitle': 'Modify products',
-          'iconColor': Colors.blue,
-          'onTap': () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SellerPage()),
-            );
-          },
-        },
-        {
           'icon': Icons.bar_chart,
           'title': 'View Sales',
           'subtitle': 'Sales reports',
@@ -661,14 +643,21 @@ class _FoodShareHomePageState extends State<FoodShareHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final pages = [
+      _buildHomePage(),
+      _buildMessagePage(),
+      _buildNotificationPage(),
+      _buildSettingPage(),
+    ];
+
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 243, 238, 238),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         toolbarHeight: 0,
       ),
-      body: _pages[_selectedIndex],
+      body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {
@@ -676,9 +665,9 @@ class _FoodShareHomePageState extends State<FoodShareHomePage> {
             _selectedIndex = index;
           });
         },
-        backgroundColor: const Color.fromARGB(255, 133, 240, 136),
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.blue.shade300,
+        backgroundColor: Theme.of(context).cardColor,
+        selectedItemColor: primaryGreen,
+        unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Message'),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
+import 'providers/theme_provider.dart';
 import 'pages/getstarted.dart';
 import 'account/login.dart';
 import 'account/create_account.dart';
@@ -17,7 +19,12 @@ Future<void> main() async {
     anonKey: 'sb_publishable_yFTQXDAqGLlZOywu3RzG6Q_FZNwKCl-',
   );
 
-  runApp(const FoodShareApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const FoodShareApp(),
+    ),
+  );
 }
 
 class FoodShareApp extends StatelessWidget {
@@ -25,37 +32,35 @@ class FoodShareApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'PlateShare App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        primaryColor: primaryGreen,
-        scaffoldBackgroundColor: const Color(0xFFF0F0F0),
-        fontFamily: 'Roboto',
-        useMaterial3: true,
-      ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const GetStartedPage(),
-        '/login': (context) => const LoginPage(),
-        '/signup': (context) => const CreateAccountScreen(),
-        '/forgotPassword': (context) => const ForgotPasswordPage(),
-      },
-      onGenerateRoute: (settings) {
-        if (settings.name == '/home') {
-          final args = settings.arguments as Map<String, String>?;
-          return MaterialPageRoute(
-            builder: (context) => FoodShareHomePage(
-              userName: args?['userName'] ?? 'Guest',
-              userCategory: args?['userCategory'] ?? 'Donor',
-            ),
-          );
-        }
-        if (settings.name == '/admin') {
-          return MaterialPageRoute(builder: (context) => const AdminPage());
-        }
-        return null;
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'PlateShare App',
+          debugShowCheckedModeBanner: false,
+          theme: themeProvider.getThemeData(),
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const GetStartedPage(),
+            '/login': (context) => const LoginPage(),
+            '/signup': (context) => const CreateAccountScreen(),
+            '/forgotPassword': (context) => const ForgotPasswordPage(),
+          },
+          onGenerateRoute: (settings) {
+            if (settings.name == '/home') {
+              final args = settings.arguments as Map<String, String>?;
+              return MaterialPageRoute(
+                builder: (context) => FoodShareHomePage(
+                  userName: args?['userName'] ?? 'Guest',
+                  userCategory: args?['userCategory'] ?? 'Donor',
+                ),
+              );
+            }
+            if (settings.name == '/admin') {
+              return MaterialPageRoute(builder: (context) => const AdminPage());
+            }
+            return null;
+          },
+        );
       },
     );
   }
