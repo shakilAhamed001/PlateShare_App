@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/pages/request_food.dart';
+import 'package:flutter_application_2/pages/notification_page.dart';
 import 'browse_donations.dart';
 
 class RecepientPage extends StatefulWidget {
@@ -82,7 +83,12 @@ class _RecepientPageState extends State<RecepientPage> {
               title: 'Notifications',
               subtitle: 'Updates on requests',
               onTap: () {
-                // Navigate to notifications
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationPage(),
+                  ),
+                );
               },
             ),
           ],

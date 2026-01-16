@@ -15,6 +15,7 @@ class _RequestFoodPageState extends State<RequestFoodPage> {
   late String recipientId;
   List<Donation> availableDonations = [];
   bool isLoading = true;
+  final Map<String, bool> _isSubmitting = {};
 
   @override
   void initState() {
@@ -98,13 +99,24 @@ class _RequestFoodPageState extends State<RequestFoodPage> {
                             ),
                             const SizedBox(width: 8),
                             ElevatedButton(
-                              onPressed: () async {
-                                await _requestFood(donation);
-                              },
+                              onPressed: _isSubmitting[donation.id] == true
+                                  ? null
+                                  : () async {
+                                      await _requestFood(donation);
+                                    },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green,
                               ),
-                              child: const Text('Request'),
+                              child: _isSubmitting[donation.id] == true
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text('Request'),
                             ),
                           ],
                         ),
@@ -118,15 +130,24 @@ class _RequestFoodPageState extends State<RequestFoodPage> {
   }
 
   Future<void> _requestFood(Donation donation) async {
-    FoodRequest request = FoodRequest(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      donationId: donation.id,
-      recipientId: recipientId,
-    );
-    await DonationService.addRequest(request);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Food request submitted!')));
-    await _loadDonations(); // Reload donations
+    setState(() => _isSubmitting[donation.id] = true);
+    try {
+      FoodRequest request = FoodRequest(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        donationId: donation.id,
+        recipientId: recipientId,
+      );
+      await DonationService.addRequest(request);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Food request submitted!')));
+      await _loadDonations(); // Reload donations
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to submit request: $e')));
+    } finally {
+      setState(() => _isSubmitting[donation.id] = false);
+    }
   }
 }

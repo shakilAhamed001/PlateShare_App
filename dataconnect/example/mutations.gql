@@ -1,33 +1,43 @@
-# Example mutations for a simple movie app
+# PlateShare Mutations
 
-# Create a movie based on user input
-mutation CreateMovie($title: String!, $genre: String!, $imageUrl: String!)
-@auth(level: USER_EMAIL_VERIFIED, insecureReason: "Any email verified users can create a new movie.") {
-  movie_insert(data: { title: $title, genre: $genre, imageUrl: $imageUrl })
-}
-
-# Upsert (update or insert) a user's username based on their auth.uid
-mutation UpsertUser($username: String!) @auth(level: USER) {
-  # The "auth.uid" server value ensures that users can only register their own user.
-  user_upsert(data: { id_expr: "auth.uid", username: $username })
-}
-
-# Add a review for a movie
-mutation AddReview($movieId: UUID!, $rating: Int!, $reviewText: String!)
+mutation CreateDonor($name: String!, $phone: String!, $address: String!, $email: String)
 @auth(level: USER) {
-  review_upsert(
-    data: {
-      userId_expr: "auth.uid"
-      movieId: $movieId
-      rating: $rating
-      reviewText: $reviewText
-      # reviewDate defaults to today in the schema. No need to set it manually.
-    }
-  )
+  donor_upsert(data: { id_expr: "auth.uid", name: $name, phone: $phone, address: $address, email: $email })
 }
 
-# Logged in user can delete their review for a movie
-mutation DeleteReview($movieId: UUID!) @auth(level: USER) {
-  # The "auth.uid" server value ensures that users can only delete their own reviews.
-  review_delete(key: { userId_expr: "auth.uid", movieId: $movieId })
+mutation CreateDonation($name: String!, $phone: String!, $address: String!, $source: String!, $quantity: String!, $ngo: String!, $imageUrls: [String!]!)
+@auth(level: USER) {
+  donation_insert(data: {
+    name: $name,
+    phone: $phone,
+    address: $address,
+    source: $source,
+    quantity: $quantity,
+    ngo: $ngo,
+    imageUrls: $imageUrls,
+    donorId_expr: "auth.uid"
+  })
+}
+
+mutation CreateRecipient($name: String!, $phone: String!, $address: String!, $email: String)
+@auth(level: USER) {
+  recipient_upsert(data: { id_expr: "auth.uid", name: $name, phone: $phone, address: $address, email: $email })
+}
+
+mutation CreateFoodRequest($donationId: UUID!)
+@auth(level: USER) {
+  foodRequest_insert(data: {
+    donationId: $donationId,
+    recipientId_expr: "auth.uid"
+  })
+}
+
+mutation UpdateDonationStatus($id: UUID!, $status: String!)
+@auth(level: USER) {
+  donation_upsert(data: { id: $id, status: $status })
+}
+
+mutation UpdateRequestStatus($id: UUID!, $status: String!)
+@auth(level: USER) {
+  foodRequest_upsert(data: { id: $id, status: $status })
 }

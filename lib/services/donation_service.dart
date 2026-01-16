@@ -22,14 +22,31 @@ class DonationService {
 
   static Future<void> approveRequest(String requestId) async {
     await SupabaseService.updateRequestStatus(requestId, 'approved');
-    // Get the donation id from the request and update status
-    // For simplicity, assume we have the donation id
-    // In practice, fetch the request first
+    // Fetch the request to get recipient and donation ids
+    final req = await SupabaseService.getRequestById(requestId);
+    if (req != null) {
+      // Notify the recipient
+      await SupabaseService.createNotification(
+        req.recipientId,
+        'Your request for donation ${req.donationId} has been approved.',
+        req.donationId,
+      );
+      // Update donation status to approved/allocated
+      await SupabaseService.updateDonationStatus(req.donationId, 'approved');
+    }
   }
 
   static Future<void> rejectRequest(String requestId) async {
     await SupabaseService.updateRequestStatus(requestId, 'rejected');
-    // Update donation status back to available
+    final req = await SupabaseService.getRequestById(requestId);
+    if (req != null) {
+      await SupabaseService.createNotification(
+        req.recipientId,
+        'Your request for donation ${req.donationId} has been rejected.',
+        req.donationId,
+      );
+      await SupabaseService.updateDonationStatus(req.donationId, 'available');
+    }
   }
 
   static Future<List<FoodRequest>> getRequestsForRecipient(

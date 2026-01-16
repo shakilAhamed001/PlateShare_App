@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_application_2/models/donation_model.dart';
+import 'package:flutter_application_2/models/notification_model.dart';
 
 class SupabaseService {
   static final SupabaseClient _supabase = Supabase.instance.client;
@@ -92,9 +93,31 @@ class SupabaseService {
 
   // Food Request operations
   static Future<void> createFoodRequest(String donationId) async {
+    final uid = _supabase.auth.currentUser?.id;
+    if (uid == null) throw Exception('No authenticated user');
+
+    // Ensure a recipient row exists for the current user. If it already
+    // exists, ignore the duplicate-key error and continue to insert the request.
+    try {
+      await _supabase.from('recipients').insert({
+        'id': uid,
+        'name': '',
+        'phone': '',
+        'address': '',
+        'email': _supabase.auth.currentUser!.email,
+      });
+    } catch (e) {
+      final msg = e.toString();
+      if (!msg.contains('23505') && !msg.toLowerCase().contains('duplicate')) {
+        rethrow;
+      }
+    }
+
     await _supabase.from('food_requests').insert({
       'donation_id': donationId,
-      'recipient_id': _supabase.auth.currentUser!.id,
+      'recipient_id': uid,
+      'status': 'pending',
+      'request_time': DateTime.now().toIso8601String(),
     });
   }
 
@@ -138,5 +161,44 @@ class SupabaseService {
         .from('food_requests')
         .update({'status': status})
         .eq('id', requestId);
+  }
+
+  // Get single request
+  static Future<FoodRequest?> getRequestById(String id) async {
+    final response = await _supabase
+        .from('food_requests')
+        .select()
+        .eq('id', id)
+        .single();
+
+    return FoodRequest.fromMap(response);
+  }
+
+  // Notification operations
+  static Future<void> createNotification(
+    String recipientId,
+    String message,
+    String donationId,
+  ) async {
+    await _supabase.from('notifications').insert({
+      'recipient_id': recipientId,
+      'message': message,
+      'donation_id': donationId,
+      'read': false,
+    });
+  }
+
+  static Future<List<AppNotification>> getNotificationsForUser() async {
+    final response = await _supabase
+        .from('notifications')
+        .select()
+        .eq('recipient_id', _supabase.auth.currentUser!.id)
+        .order('created_at', ascending: false);
+
+    return response.map((data) => AppNotification.fromMap(data)).toList();
+  }
+
+  static Future<void> markNotificationRead(String id) async {
+    await _supabase.from('notifications').update({'read': true}).eq('id', id);
   }
 }
