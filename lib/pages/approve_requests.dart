@@ -22,13 +22,25 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
 
   Future<void> _loadRequests() async {
     try {
+      print('Loading pending requests...');
       pendingRequests = await DonationService.getPendingRequests();
-    } catch (e) {
-      // Handle error
-    } finally {
+      print('Loaded ${pendingRequests.length} requests');
       setState(() {
         isLoading = false;
       });
+    } catch (e) {
+      print('Error loading requests: $e');
+      setState(() {
+        isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     }
   }
 
@@ -42,8 +54,21 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : pendingRequests.isEmpty
-          ? const Center(child: Text('No pending requests.'))
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.inbox, size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'No pending requests.',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
+            )
           : ListView.builder(
+              padding: const EdgeInsets.all(8.0),
               itemCount: pendingRequests.length,
               itemBuilder: (context, index) {
                 FoodRequest request = pendingRequests[index];
@@ -53,59 +78,204 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Card(
                         margin: EdgeInsets.all(8.0),
-                        child: ListTile(title: Text('Loading...')),
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: CircularProgressIndicator(),
+                        ),
                       );
                     } else if (snapshot.hasError || !snapshot.hasData) {
-                      return const Card(
-                        margin: EdgeInsets.all(8.0),
-                        child: ListTile(title: Text('Error loading donation')),
+                      return Card(
+                        margin: const EdgeInsets.all(8.0),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Error loading donation details',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                              const SizedBox(height: 8),
+                              Text('Request ID: ${request.id}'),
+                              Text('Donation ID: ${request.donationId}'),
+                              Text('Recipient: ${request.recipientId}'),
+                            ],
+                          ),
+                        ),
                       );
                     } else {
                       Donation donation = snapshot.data!;
                       return Card(
-                        margin: const EdgeInsets.all(8.0),
-                        child: ListTile(
-                          title: Text('Request by: ${request.recipientId}'),
-                          subtitle: Text(
-                            'Food: ${donation.source}\nQuantity: ${donation.quantity}\nLocation: ${donation.address}',
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 8.0,
+                          vertical: 6.0,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              ElevatedButton(
-                                onPressed: () async {
-                                  await DonationService.approveRequest(
-                                    request.id,
-                                  );
-                                  await _loadRequests();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Request approved!'),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Food: ${donation.source}',
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Name: ${donation.name}',
+                                          style: const TextStyle(fontSize: 14),
+                                        ),
+                                      ],
                                     ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                ),
-                                child: const Text('Approve'),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Text(
+                                      'Pending',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 8),
-                              ElevatedButton(
-                                onPressed: () async {
-                                  await DonationService.rejectRequest(
-                                    request.id,
-                                  );
-                                  await _loadRequests();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Request rejected!'),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.person,
+                                    size: 16,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Recipient: ${request.recipientId}',
+                                      style: const TextStyle(fontSize: 13),
                                     ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                ),
-                                child: const Text('Reject'),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.local_shipping,
+                                    size: 16,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Quantity: ${donation.quantity}',
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_on,
+                                    size: 16,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Location: ${donation.address}',
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.phone,
+                                    size: 16,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Phone: ${donation.phone}',
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  ElevatedButton.icon(
+                                    onPressed: () async {
+                                      await DonationService.approveRequest(
+                                        request.id,
+                                      );
+                                      await _loadRequests();
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Request approved!'),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                    ),
+                                    icon: const Icon(Icons.check),
+                                    label: const Text('Approve'),
+                                  ),
+                                  ElevatedButton.icon(
+                                    onPressed: () async {
+                                      await DonationService.rejectRequest(
+                                        request.id,
+                                      );
+                                      await _loadRequests();
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Request rejected!'),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                    ),
+                                    icon: const Icon(Icons.close),
+                                    label: const Text('Reject'),
+                                  ),
+                                ],
                               ),
                             ],
                           ),

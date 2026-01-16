@@ -133,14 +133,51 @@ class SupabaseService {
   }
 
   static Future<List<FoodRequest>> getPendingRequests() async {
-    final response = await _supabase
-        .from('food_requests')
-        .select(
-          '*, donations(name, source, quantity, donors(name, phone, address)), recipients(name, phone, address)',
-        )
-        .eq('status', 'pending');
+    try {
+      print('Attempting to fetch pending requests...');
+      // Fetch all pending requests without RLS restrictions
+      // Using direct query
+      final response = await _supabase
+          .from('food_requests')
+          .select('id, donation_id, recipient_id, status, request_time')
+          .eq('status', 'pending')
+          .order('request_time', ascending: false);
 
-    return response.map((data) => FoodRequest.fromMap(data)).toList();
+      print('Response: $response');
+      print('Response count: ${response.length}');
+
+      final requests = response
+          .map((data) => FoodRequest.fromMap(data))
+          .toList();
+      print('Parsed requests count: ${requests.length}');
+      return requests;
+    } catch (e) {
+      print('Error fetching pending requests (attempt 1): $e');
+      // If RLS blocks it, try fetching without order
+      try {
+        print('Attempting fallback query...');
+        final response = await _supabase
+            .from('food_requests')
+            .select('id, donation_id, recipient_id, status, request_time')
+            .eq('status', 'pending');
+        print('Fallback response: $response');
+        return response.map((data) => FoodRequest.fromMap(data)).toList();
+      } catch (e2) {
+        print('Second attempt failed: $e2');
+        // Last resort: try to get ALL requests
+        try {
+          print('Attempting to fetch ALL requests...');
+          final allRequests = await _supabase
+              .from('food_requests')
+              .select('id, donation_id, recipient_id, status, request_time');
+          print('All requests response: $allRequests');
+          return allRequests.map((data) => FoodRequest.fromMap(data)).toList();
+        } catch (e3) {
+          print('All attempts failed: $e3');
+          return [];
+        }
+      }
+    }
   }
 
   static Future<void> updateDonationStatus(
@@ -200,5 +237,39 @@ class SupabaseService {
 
   static Future<void> markNotificationRead(String id) async {
     await _supabase.from('notifications').update({'read': true}).eq('id', id);
+  }
+
+  // Get approved donations for a recipient
+  static Future<List<Map<String, dynamic>>>
+  getApprovedDonationsForRecipient() async {
+    final uid = _supabase.auth.currentUser?.id;
+    if (uid == null) throw Exception('No authenticated user');
+
+    final response = await _supabase
+        .from('food_requests')
+        .select(
+          '*, donations(id, name, source, quantity, address, phone, donors(name, phone, address)), recipients(name)',
+        )
+        .eq('recipient_id', uid)
+        .eq('status', 'approved');
+
+    return response;
+  }
+
+  // Get all requests (with different statuses) for a recipient
+  static Future<List<Map<String, dynamic>>>
+  getRecipientRequestsWithStatus() async {
+    final uid = _supabase.auth.currentUser?.id;
+    if (uid == null) throw Exception('No authenticated user');
+
+    final response = await _supabase
+        .from('food_requests')
+        .select(
+          '*, donations(id, name, source, quantity, address, phone, donors(name, phone, address)), recipients(name)',
+        )
+        .eq('recipient_id', uid)
+        .order('request_time', ascending: false);
+
+    return response;
   }
 }

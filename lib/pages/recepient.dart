@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/pages/request_food.dart';
 import 'package:flutter_application_2/pages/notification_page.dart';
+import 'package:flutter_application_2/pages/my_requests.dart';
+import 'package:flutter_application_2/pages/my_approved_donations.dart';
 import 'browse_donations.dart';
 
 class RecepientPage extends StatefulWidget {
@@ -67,7 +69,25 @@ class _RecepientPageState extends State<RecepientPage> {
               title: 'My Requests',
               subtitle: 'View request history',
               onTap: () {
-                // Navigate to requests history
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyRequestsPage(),
+                  ),
+                );
+              },
+            ),
+            _buildActionCard(
+              icon: Icons.check_circle,
+              title: 'My Approved Donations',
+              subtitle: 'View approved donations',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyApprovedDonationsPage(),
+                  ),
+                );
               },
             ),
             _buildActionCard(
