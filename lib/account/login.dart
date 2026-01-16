@@ -33,10 +33,10 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: Theme.of(context).textTheme.titleLarge?.color,
           ),
         ),
         const SizedBox(height: 8),
@@ -46,21 +46,30 @@ class _LoginPageState extends State<LoginPage> {
           obscureText: isPassword,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Colors.grey),
+            hintStyle: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+            ),
             filled: true,
-            fillColor: const Color(0xFFF5F5F5),
+            fillColor: Theme.of(context).cardColor,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 15,
               vertical: 18,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey.shade700
+                    : Colors.grey.shade300,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: primaryGreen, width: 2),
             ),
+          ),
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyMedium?.color,
           ),
         ),
       ],
@@ -242,7 +251,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F0F0),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
       /// AppBar (Custom Status Style)
       appBar: AppBar(
@@ -277,9 +286,9 @@ class _LoginPageState extends State<LoginPage> {
           children: [
             Container(
               width: double.infinity,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(30),
                   topRight: Radius.circular(30),
                 ),
@@ -293,9 +302,9 @@ class _LoginPageState extends State<LoginPage> {
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.arrow_back_ios,
-                            color: Colors.black,
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
                           ),
                           onPressed: () => Navigator.pop(context),
                         ),
@@ -305,23 +314,26 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 10),
 
-                    const Center(
+                    Center(
                       child: Text(
                         'Welcome Back',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: Theme.of(context).textTheme.titleLarge?.color,
                         ),
                       ),
                     ),
 
                     const SizedBox(height: 5),
 
-                    const Center(
+                    Center(
                       child: Text(
                         'Sign in to continue',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                        ),
                       ),
                     ),
 
