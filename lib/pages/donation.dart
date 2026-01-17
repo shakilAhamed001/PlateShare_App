@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io' show Platform, File;
 import 'package:flutter_application_2/models/donation_model.dart';
 import 'package:flutter_application_2/services/donation_service.dart';
+import 'package:flutter_application_2/services/supabase_storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // --- Shared Constants ---
@@ -73,13 +74,24 @@ class _DonationPageState extends State<DonationPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Select Image Source'),
+          backgroundColor: Theme.of(context).dialogBackgroundColor,
+          title: Text(
+            'Select Image Source',
+            style: TextStyle(
+              color: Theme.of(context).textTheme.titleLarge?.color,
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Gallery'),
+                title: Text(
+                  'Gallery',
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
+                ),
                 onTap: () {
                   Navigator.of(context).pop();
                   _pickImage(ImageSource.gallery);
@@ -88,16 +100,26 @@ class _DonationPageState extends State<DonationPage> {
               if (!kIsWeb && (Platform.isAndroid || Platform.isIOS))
                 ListTile(
                   leading: const Icon(Icons.camera_alt),
-                  title: const Text('Camera'),
+                  title: Text(
+                    'Camera',
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                    ),
+                  ),
                   onTap: () {
                     Navigator.of(context).pop();
                     _pickImage(ImageSource.camera);
                   },
                 ),
               if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS))
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text('Camera not supported on this platform.'),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Camera not supported on this platform.',
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -357,6 +379,13 @@ class _DonationPageState extends State<DonationPage> {
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       _formKey.currentState!.save();
+                      // Upload images to Supabase Storage
+                      List<String> imageUrls = [];
+                      if (_imageFiles.isNotEmpty) {
+                        imageUrls = await SupabaseStorageService.uploadImages(
+                          _imageFiles,
+                        );
+                      }
                       // Get donor name from prefs
                       final prefs = await SharedPreferences.getInstance();
                       String donorName =
@@ -370,12 +399,10 @@ class _DonationPageState extends State<DonationPage> {
                         source: source,
                         quantity: quantity,
                         ngo: ngo,
-                        imagePaths: _imageFiles
-                            .map((file) => file.path)
-                            .toList(),
+                        imagePaths: imageUrls,
                         donorId: donorName,
                       );
-                      DonationService.addDonation(donation);
+                      await DonationService.addDonation(donation);
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(

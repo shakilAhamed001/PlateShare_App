@@ -1,53 +1,92 @@
-# Example queries for a simple movie app.
+# PlateShare Queries
 
-# @auth() directives control who can call each operation.
-# Anyone should be able to list all movies, so the auth level is set to PUBLIC
-query ListMovies @auth(level: PUBLIC, insecureReason: "Anyone can list all movies.") {
-  movies {
+query ListAvailableDonations @auth(level: PUBLIC) {
+  donations(where: { status: { eq: "available" } }) {
     id
-    title
-    imageUrl
-    genre
+    name
+    phone
+    address
+    source
+    quantity
+    ngo
+    imageUrls
+    status
+    donor {
+      name
+    }
+    createdAt
   }
 }
 
-# List all users, only admins should be able to list all users, so we use NO_ACCESS
-query ListUsers @auth(level: NO_ACCESS) {
-  users {
+query GetDonationById($id: UUID!) @auth(level: PUBLIC) {
+  donation(id: $id) {
     id
-    username
+    name
+    phone
+    address
+    source
+    quantity
+    ngo
+    imageUrls
+    status
+    donor {
+      name
+      phone
+      address
+    }
+    createdAt
   }
 }
 
-# Logged in users can list all their reviews and movie titles associated with the review
-# Since the query uses the uid of the current authenticated user, we set auth level to USER
-query ListUserReviews @auth(level: USER) {
-  user(key: { id_expr: "auth.uid" }) {
+query ListUserDonations @auth(level: USER) {
+  donations(where: { donorId: { eq_expr: "auth.uid" } }) {
     id
-    username
-    # <field>_on_<foreign_key_field> makes it easy to grab info from another table
-    # Here, we use it to grab all the reviews written by the user.
-    reviews: reviews_on_user {
-      rating
-      reviewDate
-      reviewText
-      movie {
-        id
-        title
+    name
+    source
+    quantity
+    status
+    createdAt
+  }
+}
+
+query ListUserRequests @auth(level: USER) {
+  foodRequests(where: { recipientId: { eq_expr: "auth.uid" } }) {
+    id
+    status
+    requestTime
+    donation {
+      name
+      source
+      quantity
+      donor {
+        name
       }
     }
   }
 }
 
-# Get movie by id
-query GetMovieById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Anyone can get a movie by id.") {
-  movie(id: $id) {
+query ListPendingRequests @auth(level: USER) {
+  foodRequests(where: { status: { eq: "pending" } }) {
     id
-    title
-    imageUrl
-    genre
-    metadata: movieMetadata_on_movie {
-      rating
+    status
+    requestTime
+    donation {
+      name
+      source
+      quantity
+      donor {
+        name
+        phone
+        address
+      }
+    }
+    recipient {
+      name
+      phone
+      address
+    }
+  }
+}
       releaseYear
       description
     }

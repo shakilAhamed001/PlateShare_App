@@ -163,7 +163,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
         return;
       }
 
-      final user = signUpRes?.user ?? supabase.auth.currentUser;
+      final user = signUpRes.user ?? supabase.auth.currentUser;
 
       // Always save the chosen display name and category locally —
       // we'll create the server-side profile at first successful login instead.
@@ -375,7 +375,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen>
                                 ),
                                 const SizedBox(height: 10),
                                 DropdownButtonFormField<String>(
-                                  value: _selectedCategory,
+                                  initialValue: _selectedCategory,
                                   decoration: InputDecoration(
                                     prefixIcon: const Icon(Icons.category),
                                     labelText: 'Category',

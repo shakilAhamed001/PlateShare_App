@@ -1,43 +1,120 @@
 import 'package:flutter_application_2/models/donation_model.dart';
+import 'package:flutter_application_2/services/supabase_service.dart';
 
 class DonationService {
-  static List<Donation> donations = [];
-  static List<FoodRequest> requests = [];
-
-  static void addDonation(Donation donation) {
-    donations.add(donation);
+  static Future<void> addDonation(Donation donation) async {
+    await SupabaseService.createDonation(donation);
   }
 
-  static List<Donation> getAvailableDonations() {
-    return donations.where((d) => d.status == 'available').toList();
+  static Future<List<Donation>> getAvailableDonations() async {
+    return await SupabaseService.getAvailableDonations();
   }
 
-  static void addRequest(FoodRequest request) {
-    requests.add(request);
+  static Future<void> addRequest(FoodRequest request) async {
+    await SupabaseService.createFoodRequest(request.donationId);
     // Update donation status to requested
-    var donation = donations.firstWhere((d) => d.id == request.donationId);
-    donation.status = 'requested';
+    await SupabaseService.updateDonationStatus(request.donationId, 'requested');
   }
 
-  static List<FoodRequest> getPendingRequests() {
-    return requests.where((r) => r.status == 'pending').toList();
+  static Future<List<FoodRequest>> getPendingRequests() async {
+    return await SupabaseService.getPendingRequests();
   }
 
-  static void approveRequest(String requestId) {
-    var request = requests.firstWhere((r) => r.id == requestId);
-    request.status = 'approved';
-    var donation = donations.firstWhere((d) => d.id == request.donationId);
-    donation.status = 'approved';
+  static Future<void> approveRequest(String requestId) async {
+    try {
+      print('=== Approving request: $requestId ===');
+
+      // First, try to get the full request data BEFORE updating
+      print('Fetching request details...');
+      final req = await SupabaseService.getRequestById(requestId);
+
+      if (req == null) {
+        print('ERROR: Could not fetch request data for ID: $requestId');
+        throw Exception('Request not found or cannot be accessed');
+      }
+
+      print(
+        'Request found - Recipient: ${req.recipientId}, Donation: ${req.donationId}',
+      );
+
+      // Update request status
+      print('Updating request status to approved...');
+      await SupabaseService.updateRequestStatus(requestId, 'approved');
+
+      // Update donation status to approved/allocated
+      print('Updating donation status to approved...');
+      await SupabaseService.updateDonationStatus(req.donationId, 'approved');
+
+      // Notify the recipient (non-critical, continue even if it fails)
+      print('Creating notification...');
+      try {
+        await SupabaseService.createNotification(
+          req.recipientId,
+          'Your request for donation ${req.donationId} has been approved.',
+          req.donationId,
+        );
+        print('✓ Notification created');
+      } catch (notifError) {
+        print('⚠ Warning: Could not create notification - $notifError');
+        // Don't fail the whole approval just because notification failed
+      }
+
+      print('✓ Request $requestId approved successfully');
+    } catch (e) {
+      print('ERROR approving request: $e');
+      rethrow;
+    }
   }
 
-  static void rejectRequest(String requestId) {
-    var request = requests.firstWhere((r) => r.id == requestId);
-    request.status = 'rejected';
-    var donation = donations.firstWhere((d) => d.id == request.donationId);
-    donation.status = 'available'; // back to available
+  static Future<void> rejectRequest(String requestId) async {
+    try {
+      print('=== Rejecting request: $requestId ===');
+
+      // First, try to get the full request data BEFORE updating
+      print('Fetching request details...');
+      final req = await SupabaseService.getRequestById(requestId);
+
+      if (req == null) {
+        print('ERROR: Could not fetch request data for ID: $requestId');
+        throw Exception('Request not found or cannot be accessed');
+      }
+
+      print(
+        'Request found - Recipient: ${req.recipientId}, Donation: ${req.donationId}',
+      );
+
+      // Update request status
+      print('Updating request status to rejected...');
+      await SupabaseService.updateRequestStatus(requestId, 'rejected');
+
+      // Update donation status back to available
+      print('Updating donation status to available...');
+      await SupabaseService.updateDonationStatus(req.donationId, 'available');
+
+      // Notify the recipient (non-critical, continue even if it fails)
+      print('Creating rejection notification...');
+      try {
+        await SupabaseService.createNotification(
+          req.recipientId,
+          'Your request for donation ${req.donationId} has been rejected.',
+          req.donationId,
+        );
+        print('✓ Notification created');
+      } catch (notifError) {
+        print('⚠ Warning: Could not create notification - $notifError');
+        // Don't fail the whole rejection just because notification failed
+      }
+
+      print('✓ Request $requestId rejected successfully');
+    } catch (e) {
+      print('ERROR rejecting request: $e');
+      rethrow;
+    }
   }
 
-  static List<FoodRequest> getRequestsForRecipient(String recipientId) {
-    return requests.where((r) => r.recipientId == recipientId).toList();
+  static Future<List<FoodRequest>> getRequestsForRecipient(
+    String recipientId,
+  ) async {
+    return await SupabaseService.getUserRequests();
   }
 }
