@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'volunteer_tasks.dart';
 
 class VolunteerPage extends StatefulWidget {
   const VolunteerPage({super.key});
@@ -81,6 +82,20 @@ class _VolunteerPageState extends State<VolunteerPage> {
               iconColor: Colors.purple,
               onTap: () {
                 // Navigate to help requests
+              },
+            ),
+            _buildActionCard(
+              icon: Icons.task,
+              title: 'My Tasks',
+              subtitle: 'View your assigned tasks',
+              iconColor: Colors.red,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const VolunteerTasksPage(),
+                  ),
+                );
               },
             ),
           ],
