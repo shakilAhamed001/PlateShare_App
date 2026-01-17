@@ -202,13 +202,19 @@ class SupabaseService {
 
   // Get single request
   static Future<FoodRequest?> getRequestById(String id) async {
-    final response = await _supabase
-        .from('food_requests')
-        .select()
-        .eq('id', id)
-        .single();
+    try {
+      final response = await _supabase
+          .from('food_requests')
+          .select()
+          .eq('id', id)
+          .single();
 
-    return FoodRequest.fromMap(response);
+      return FoodRequest.fromMap(response);
+    } catch (e) {
+      print('Error fetching request by ID: $e');
+      // Return null instead of crashing
+      return null;
+    }
   }
 
   // Notification operations

@@ -233,18 +233,38 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
                                 children: [
                                   ElevatedButton.icon(
                                     onPressed: () async {
-                                      await DonationService.approveRequest(
-                                        request.id,
-                                      );
-                                      await _loadRequests();
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Request approved!'),
-                                          ),
+                                      try {
+                                        await DonationService.approveRequest(
+                                          request.id,
                                         );
+                                        await _loadRequests();
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Request approved!',
+                                              ),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        print('Error approving request: $e');
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error: $e'),
+                                              backgroundColor: Colors.red,
+                                              duration: const Duration(
+                                                seconds: 5,
+                                              ),
+                                            ),
+                                          );
+                                        }
                                       }
                                     },
                                     style: ElevatedButton.styleFrom(
@@ -255,18 +275,38 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
                                   ),
                                   ElevatedButton.icon(
                                     onPressed: () async {
-                                      await DonationService.rejectRequest(
-                                        request.id,
-                                      );
-                                      await _loadRequests();
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Request rejected!'),
-                                          ),
+                                      try {
+                                        await DonationService.rejectRequest(
+                                          request.id,
                                         );
+                                        await _loadRequests();
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Request rejected!',
+                                              ),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        print('Error rejecting request: $e');
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error: $e'),
+                                              backgroundColor: Colors.red,
+                                              duration: const Duration(
+                                                seconds: 5,
+                                              ),
+                                            ),
+                                          );
+                                        }
                                       }
                                     },
                                     style: ElevatedButton.styleFrom(
