@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/models/donation_model.dart';
+import 'package:flutter_application_2/models/volunteer_model.dart';
 import 'package:flutter_application_2/services/donation_service.dart';
 import 'package:flutter_application_2/services/supabase_service.dart';
 
@@ -41,6 +42,111 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _showVolunteerSelectionDialog(FoodRequest request) async {
+    List<Volunteer> volunteers = [];
+    bool loadingVolunteers = true;
+
+    try {
+      volunteers = await DonationService.getAvailableVolunteers();
+      loadingVolunteers = false;
+    } catch (e) {
+      print('Error loading volunteers: $e');
+      loadingVolunteers = false;
+    }
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            title: const Text('Assign Volunteer'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Select a volunteer to assign this donation delivery task:',
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                if (loadingVolunteers)
+                  const Center(child: CircularProgressIndicator())
+                else if (volunteers.isEmpty)
+                  const Center(
+                    child: Text(
+                      'No volunteers available',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  )
+                else
+                  Container(
+                    constraints: const BoxConstraints(maxHeight: 250),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: volunteers.length,
+                      itemBuilder: (context, index) {
+                        Volunteer volunteer = volunteers[index];
+                        return ListTile(
+                          leading: const Icon(
+                            Icons.person_outline,
+                            color: Colors.blue,
+                          ),
+                          title: Text(volunteer.name),
+                          subtitle: Text(volunteer.phone),
+                          trailing: const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                          ),
+                          onTap: () async {
+                            Navigator.pop(context);
+                            try {
+                              await DonationService.approveRequestWithVolunteer(
+                                request.id,
+                                volunteer.id,
+                              );
+                              await _loadRequests();
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Request approved! Volunteer ${volunteer.name} assigned.',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              print('Error approving with volunteer: $e');
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error: $e'),
+                                    backgroundColor: Colors.red,
+                                    duration: const Duration(seconds: 5),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+            ],
+          ),
+        ),
+      );
     }
   }
 
@@ -232,40 +338,8 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   ElevatedButton.icon(
-                                    onPressed: () async {
-                                      try {
-                                        await DonationService.approveRequest(
-                                          request.id,
-                                        );
-                                        await _loadRequests();
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Request approved!',
-                                              ),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
-                                        }
-                                      } catch (e) {
-                                        print('Error approving request: $e');
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text('Error: $e'),
-                                              backgroundColor: Colors.red,
-                                              duration: const Duration(
-                                                seconds: 5,
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      }
+                                    onPressed: () {
+                                      _showVolunteerSelectionDialog(request);
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.green,

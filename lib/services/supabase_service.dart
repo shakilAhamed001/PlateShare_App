@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_application_2/models/donation_model.dart';
 import 'package:flutter_application_2/models/notification_model.dart';
+import 'package:flutter_application_2/models/volunteer_model.dart';
 
 class SupabaseService {
   static final SupabaseClient _supabase = Supabase.instance.client;
@@ -277,5 +278,94 @@ class SupabaseService {
         .order('request_time', ascending: false);
 
     return response;
+  }
+
+  // Volunteer operations
+  static Future<List<Volunteer>> getAvailableVolunteers() async {
+    try {
+      final response = await _supabase
+          .from('volunteers')
+          .select('id, name, phone, email, status, created_at')
+          .eq('status', 'active')
+          .order('name', ascending: true);
+
+      return response.map((data) => Volunteer.fromMap(data)).toList();
+    } catch (e) {
+      print('Error fetching volunteers: $e');
+      return [];
+    }
+  }
+
+  static Future<void> createVolunteer(Volunteer volunteer) async {
+    try {
+      await _supabase.from('volunteers').insert(volunteer.toMap());
+    } catch (e) {
+      print('Error creating volunteer: $e');
+      rethrow;
+    }
+  }
+
+  // Volunteer Task operations
+  static Future<void> assignTaskToVolunteer(
+    String donationId,
+    String volunteerId,
+  ) async {
+    try {
+      final taskId = _generateId();
+      await _supabase.from('volunteer_tasks').insert({
+        'id': taskId,
+        'donation_id': donationId,
+        'volunteer_id': volunteerId,
+        'status': 'assigned',
+        'assigned_at': DateTime.now().toIso8601String(),
+      });
+      print('Task assigned: $taskId to volunteer: $volunteerId');
+    } catch (e) {
+      print('Error assigning task: $e');
+      rethrow;
+    }
+  }
+
+  static Future<List<VolunteerTask>> getTasksForVolunteer(
+    String volunteerId,
+  ) async {
+    try {
+      final response = await _supabase
+          .from('volunteer_tasks')
+          .select(
+            '*, donations(id, name, source, quantity, address, phone, donors(name)), volunteers(name, phone)',
+          )
+          .eq('volunteer_id', volunteerId)
+          .neq('status', 'cancelled')
+          .order('assigned_at', ascending: false);
+
+      return response.map((data) => VolunteerTask.fromMap(data)).toList();
+    } catch (e) {
+      print('Error fetching volunteer tasks: $e');
+      return [];
+    }
+  }
+
+  static Future<void> updateTaskStatus(String taskId, String status) async {
+    try {
+      final updateData = {'status': status};
+      if (status == 'completed') {
+        updateData['completed_at'] = DateTime.now().toIso8601String();
+      }
+      await _supabase
+          .from('volunteer_tasks')
+          .update(updateData)
+          .eq('id', taskId);
+      print('Task $taskId status updated to $status');
+    } catch (e) {
+      print('Error updating task status: $e');
+      rethrow;
+    }
+  }
+
+  // Helper method to generate unique IDs
+  static String _generateId() {
+    return DateTime.now().millisecondsSinceEpoch.toString() +
+        (DateTime.now().microsecond % 1000).toString();
   }
 }

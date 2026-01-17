@@ -1,4 +1,5 @@
 import 'package:flutter_application_2/models/donation_model.dart';
+import 'package:flutter_application_2/models/volunteer_model.dart';
 import 'package:flutter_application_2/services/supabase_service.dart';
 
 class DonationService {
@@ -116,5 +117,73 @@ class DonationService {
     String recipientId,
   ) async {
     return await SupabaseService.getUserRequests();
+  }
+
+  // Volunteer assignment methods
+  static Future<List<Volunteer>> getAvailableVolunteers() async {
+    return await SupabaseService.getAvailableVolunteers();
+  }
+
+  static Future<void> assignVolunteerToTask(
+    String donationId,
+    String volunteerId,
+  ) async {
+    return await SupabaseService.assignTaskToVolunteer(donationId, volunteerId);
+  }
+
+  static Future<void> approveRequestWithVolunteer(
+    String requestId,
+    String volunteerId,
+  ) async {
+    try {
+      print('=== Approving request with volunteer assignment ===');
+
+      // First, try to get the full request data BEFORE updating
+      print('Fetching request details...');
+      final req = await SupabaseService.getRequestById(requestId);
+
+      if (req == null) {
+        print('ERROR: Could not fetch request data for ID: $requestId');
+        throw Exception('Request not found or cannot be accessed');
+      }
+
+      print(
+        'Request found - Recipient: ${req.recipientId}, Donation: ${req.donationId}',
+      );
+
+      // Update request status
+      print('Updating request status to approved...');
+      await SupabaseService.updateRequestStatus(requestId, 'approved');
+
+      // Update donation status to approved/allocated
+      print('Updating donation status to approved...');
+      await SupabaseService.updateDonationStatus(req.donationId, 'approved');
+
+      // Assign volunteer to the donation task
+      print(
+        'Assigning volunteer $volunteerId to donation ${req.donationId}...',
+      );
+      await SupabaseService.assignTaskToVolunteer(req.donationId, volunteerId);
+
+      // Notify the recipient (non-critical, continue even if it fails)
+      print('Creating notification...');
+      try {
+        await SupabaseService.createNotification(
+          req.recipientId,
+          'Your request for donation ${req.donationId} has been approved. A volunteer has been assigned to help with delivery.',
+          req.donationId,
+        );
+        print('✓ Notification created');
+      } catch (notifError) {
+        print('⚠ Warning: Could not create notification - $notifError');
+      }
+
+      print(
+        '✓ Request $requestId approved and volunteer assigned successfully',
+      );
+    } catch (e) {
+      print('ERROR approving request with volunteer: $e');
+      rethrow;
+    }
   }
 }
