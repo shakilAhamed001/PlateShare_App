@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../account/login.dart';
 import 'donation.dart';
+import 'donation_history_page.dart';
 import 'admin.dart';
 import 'recepient.dart';
 import 'volunteer.dart';
@@ -460,7 +461,12 @@ class _FoodShareHomePageState extends State<FoodShareHomePage> {
           'title': 'My Donations',
           'subtitle': 'View history',
           'iconColor': Colors.orange,
-          'onTap': () {},
+          'onTap': () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const DonationHistoryPage()),
+            );
+          },
         },
         {
           'icon': Icons.shopping_bag_outlined,

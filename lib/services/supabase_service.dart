@@ -66,6 +66,15 @@ class SupabaseService {
     return response.map((data) => Donation.fromMap(data)).toList();
   }
 
+  static Future<List<Donation>> getDonationsByDonor(String donorId) async {
+    final response = await _supabase
+        .from('donations')
+        .select('*, donors(name, phone, address)')
+        .eq('donor_id', donorId);
+
+    return response.map((data) => Donation.fromMap(data)).toList();
+  }
+
   static Future<Donation?> getDonationById(String id) async {
     final response = await _supabase
         .from('donations')

@@ -4,8 +4,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io' show Platform, File;
 import 'package:flutter_application_2/models/donation_model.dart';
 import 'package:flutter_application_2/services/donation_service.dart';
+import 'package:flutter_application_2/services/local_donation_service.dart';
 import 'package:flutter_application_2/services/supabase_storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'my_donations.dart';
 
 // --- Shared Constants ---
 const Color primaryGreen = Color(0xFF4CAF50);
@@ -135,6 +137,20 @@ class _DonationPageState extends State<DonationPage> {
         title: const Text('Food Donation'),
         backgroundColor: primaryGreen,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'My Donations',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MyDonationsPage(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -390,19 +406,17 @@ class _DonationPageState extends State<DonationPage> {
                       final prefs = await SharedPreferences.getInstance();
                       String donorName =
                           prefs.getString('userName') ?? 'Unknown';
-                      // Create donation
-                      Donation donation = Donation(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        name: name,
-                        phone: phone,
-                        address: address,
-                        source: source,
-                        quantity: quantity,
-                        ngo: ngo,
-                        imagePaths: imageUrls,
-                        donorId: donorName,
-                      );
-                      await DonationService.addDonation(donation);
+                      
+                      // Add to local service for history
+                      LocalDonationService.addDonation(donorName, {
+                        'item': source,
+                        'quantity': quantity,
+                        'date': DateTime.now().toString().split(' ')[0],
+                        'status': 'Pending',
+                      });
+                      
+                      print('Donation added for user: $donorName');
+                      
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(

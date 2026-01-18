@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'volunteer_tasks.dart';
+import 'reports.dart';
+import 'help_requests.dart';
 
 class VolunteerPage extends StatefulWidget {
   const VolunteerPage({super.key});
@@ -72,7 +74,12 @@ class _VolunteerPageState extends State<VolunteerPage> {
               subtitle: 'Check volunteering statistics',
               iconColor: Colors.orange,
               onTap: () {
-                // Navigate to reports
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ReportsPage(),
+                  ),
+                );
               },
             ),
             _buildActionCard(
@@ -81,7 +88,12 @@ class _VolunteerPageState extends State<VolunteerPage> {
               subtitle: 'Respond to support requests',
               iconColor: Colors.purple,
               onTap: () {
-                // Navigate to help requests
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HelpRequestsPage(),
+                  ),
+                );
               },
             ),
             _buildActionCard(

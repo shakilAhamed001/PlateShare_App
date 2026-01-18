@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/models/donation_model.dart';
 import 'package:flutter_application_2/services/donation_service.dart';
+import 'package:flutter_application_2/services/local_donation_service.dart';
+import 'package:flutter_application_2/services/local_request_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'donation_detail.dart';
 
@@ -35,9 +37,22 @@ class _RequestFoodPageState extends State<RequestFoodPage> {
 
   Future<void> _loadDonations() async {
     try {
-      availableDonations = await DonationService.getAvailableDonations();
+      // Get donations from local service
+      final donations = LocalDonationService.getAllDonations();
+      availableDonations = donations.map((d) => Donation(
+        id: d['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        name: d['donor_name'] ?? 'Unknown',
+        phone: d['phone'] ?? '',
+        address: d['address'] ?? 'Unknown location',
+        source: d['item'] ?? 'Food',
+        quantity: d['quantity'] ?? '1',
+        ngo: d['ngo'] ?? '',
+        imagePaths: [],
+        donorId: d['donor_id'] ?? 'Unknown',
+        status: d['status'] ?? 'Available',
+      )).where((d) => d.status == 'Pending' || d.status == 'Available').toList();
     } catch (e) {
-      // Handle error
+      print('Error loading donations: $e');
     } finally {
       setState(() {
         isLoading = false;
@@ -132,15 +147,19 @@ class _RequestFoodPageState extends State<RequestFoodPage> {
   Future<void> _requestFood(Donation donation) async {
     setState(() => _isSubmitting[donation.id] = true);
     try {
-      FoodRequest request = FoodRequest(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+      // Add request to local service for admin approval
+      LocalRequestService.addRequest(
         donationId: donation.id,
         recipientId: recipientId,
+        donorId: donation.donorId,
+        foodItem: donation.source,
+        quantity: donation.quantity,
+        location: donation.address,
       );
-      await DonationService.addRequest(request);
+      
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Food request submitted!')));
+      ).showSnackBar(const SnackBar(content: Text('Food request submitted for admin approval!')));
       await _loadDonations(); // Reload donations
     } catch (e) {
       ScaffoldMessenger.of(

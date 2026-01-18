@@ -23,7 +23,8 @@ class _BrowseDonationsPageState extends State<BrowseDonationsPage> {
 
   Future<void> _loadDonations() async {
     try {
-      availableDonations = await DonationService.getAvailableDonations();
+      // availableDonations = await DonationService.getAvailableDonations();
+      availableDonations = []; // Temporary empty list
     } catch (e) {
       // Handle error
     } finally {
