@@ -38,7 +38,7 @@ class _RequestFoodPageState extends State<RequestFoodPage> {
   Future<void> _loadDonations() async {
     try {
       // Get donations from local service
-      final donations = LocalDonationService.getAllDonations();
+      final donations = await LocalDonationService.getAllDonations();
       availableDonations = donations.map((d) => Donation(
         id: d['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
         name: d['donor_name'] ?? 'Unknown',
@@ -47,7 +47,7 @@ class _RequestFoodPageState extends State<RequestFoodPage> {
         source: d['item'] ?? 'Food',
         quantity: d['quantity'] ?? '1',
         ngo: d['ngo'] ?? '',
-        imagePaths: [],
+        imagePaths: List<String>.from(d['imageUrls'] ?? []),
         donorId: d['donor_id'] ?? 'Unknown',
         status: d['status'] ?? 'Available',
       )).where((d) => d.status == 'Pending' || d.status == 'Available').toList();
@@ -93,6 +93,46 @@ class _RequestFoodPageState extends State<RequestFoodPage> {
                         Text('Quantity: ${donation.quantity}'),
                         Text('Location: ${donation.address}'),
                         Text('Donor: ${donation.donorId}'),
+                        const SizedBox(height: 8),
+                        // Show donation images if available
+                        if (donation.imagePaths != null && donation.imagePaths!.isNotEmpty)
+                          Container(
+                            height: 100,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: donation.imagePaths!.length,
+                              itemBuilder: (context, imgIndex) {
+                                return Container(
+                                  margin: const EdgeInsets.only(right: 8),
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.grey.shade300),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      donation.imagePaths![imgIndex],
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return const Icon(
+                                          Icons.image_not_supported,
+                                          color: Colors.grey,
+                                        );
+                                      },
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return const Center(
+                                          child: CircularProgressIndicator(),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                         const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
@@ -148,7 +188,7 @@ class _RequestFoodPageState extends State<RequestFoodPage> {
     setState(() => _isSubmitting[donation.id] = true);
     try {
       // Add request to local service for admin approval
-      LocalRequestService.addRequest(
+      await LocalRequestService.addRequest(
         donationId: donation.id,
         recipientId: recipientId,
         donorId: donation.donorId,

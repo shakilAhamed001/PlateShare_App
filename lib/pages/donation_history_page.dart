@@ -26,7 +26,7 @@ class _DonationHistoryPageState extends State<DonationHistoryPage> {
     print('Current user: $currentUser');
     
     if (currentUser != null) {
-      final userDonations = LocalDonationService.getDonations(currentUser!);
+      final userDonations = await LocalDonationService.getDonations(currentUser!);
       print('User donations: $userDonations');
       setState(() {
         donations = userDonations;

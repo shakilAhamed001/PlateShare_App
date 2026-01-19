@@ -25,7 +25,7 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
   Future<void> _loadRequests() async {
     try {
       print('Loading pending requests...');
-      pendingRequests = LocalRequestService.getPendingRequests();
+      pendingRequests = await LocalRequestService.getPendingRequests();
       print('Loaded ${pendingRequests.length} requests');
       setState(() {
         isLoading = false;
@@ -276,7 +276,7 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
                           children: [
                             ElevatedButton.icon(
                               onPressed: () async {
-                                LocalRequestService.updateRequestStatus(
+                                await LocalRequestService.updateRequestStatus(
                                   request['id'],
                                   'Approved',
                                 );
@@ -298,7 +298,7 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
                             ),
                             ElevatedButton.icon(
                               onPressed: () async {
-                                LocalRequestService.updateRequestStatus(
+                                await LocalRequestService.updateRequestStatus(
                                   request['id'],
                                   'Rejected',
                                 );

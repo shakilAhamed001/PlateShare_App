@@ -408,11 +408,12 @@ class _DonationPageState extends State<DonationPage> {
                           prefs.getString('userName') ?? 'Unknown';
                       
                       // Add to local service for history
-                      LocalDonationService.addDonation(donorName, {
+                      await LocalDonationService.addDonation(donorName, {
                         'item': source,
                         'quantity': quantity,
                         'date': DateTime.now().toString().split(' ')[0],
                         'status': 'Pending',
+                        'imageUrls': imageUrls,
                       });
                       
                       print('Donation added for user: $donorName');
