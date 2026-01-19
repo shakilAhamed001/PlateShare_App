@@ -55,12 +55,16 @@ class LocalRequestService {
     return _requests.where((r) => r['status'] == 'Pending').toList();
   }
 
-  static Future<void> updateRequestStatus(String requestId, String status) async {
+  static Future<void> updateRequestStatus(String requestId, String status, {String? volunteerId}) async {
     await _loadFromStorage();
     
     final index = _requests.indexWhere((r) => r['id'] == requestId);
     if (index != -1) {
       _requests[index]['status'] = status;
+      if (volunteerId != null) {
+        _requests[index]['volunteerId'] = volunteerId;
+        _requests[index]['assignedDate'] = DateTime.now().toString().split(' ')[0];
+      }
       await _saveToStorage();
     }
   }

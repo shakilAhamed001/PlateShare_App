@@ -3,6 +3,7 @@ import 'package:flutter_application_2/models/donation_model.dart';
 import 'package:flutter_application_2/models/volunteer_model.dart';
 import 'package:flutter_application_2/services/donation_service.dart';
 import 'package:flutter_application_2/services/local_request_service.dart';
+import 'package:flutter_application_2/services/local_volunteer_service.dart';
 import 'package:flutter_application_2/services/supabase_service.dart';
 
 class ApproveRequestsPage extends StatefulWidget {
@@ -46,104 +47,70 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
     }
   }
 
-  Future<void> _showVolunteerSelectionDialog(FoodRequest request) async {
-    List<Volunteer> volunteers = [];
-    bool loadingVolunteers = true;
-
-    try {
-      // volunteers = await DonationService.getAvailableVolunteers();
-      volunteers = []; // Temporary empty list
-      loadingVolunteers = false;
-    } catch (e) {
-      print('Error loading volunteers: $e');
-      loadingVolunteers = false;
-    }
+  Future<void> _showVolunteerSelectionDialog(Map<String, dynamic> request) async {
+    final volunteers = await LocalVolunteerService.getAvailableVolunteers();
 
     if (mounted) {
-      showDialog(
+      showModalBottomSheet(
         context: context,
-        barrierDismissible: false,
-        builder: (context) => StatefulBuilder(
-          builder: (context, setState) => AlertDialog(
-            title: const Text('Assign Volunteer'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Select a volunteer to assign this donation delivery task:',
-                  style: TextStyle(fontSize: 14),
-                ),
-                const SizedBox(height: 16),
-                if (loadingVolunteers)
-                  const Center(child: CircularProgressIndicator())
-                else if (volunteers.isEmpty)
-                  const Center(
+        builder: (context) => Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Select Volunteer',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              if (volunteers.isEmpty)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
                     child: Text(
                       'No volunteers available',
                       style: TextStyle(color: Colors.grey),
                     ),
-                  )
-                else
-                  Container(
-                    constraints: const BoxConstraints(maxHeight: 250),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: volunteers.length,
-                      itemBuilder: (context, index) {
-                        Volunteer volunteer = volunteers[index];
-                        return ListTile(
-                          leading: const Icon(
-                            Icons.person_outline,
-                            color: Colors.blue,
-                          ),
-                          title: Text(volunteer.name),
-                          subtitle: Text(volunteer.phone),
-                          trailing: const Icon(
-                            Icons.arrow_forward_ios,
-                            size: 16,
-                          ),
-                          onTap: () async {
-                            Navigator.pop(context);
-                            try {
-                              // await DonationService.approveRequestWithVolunteer(
-                              //   request.id,
-                              //   volunteer.id,
-                              // );
-                              await _loadRequests();
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Request approved! Volunteer ${volunteer.name} assigned.',
-                                    ),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              print('Error approving with volunteer: $e');
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error: $e'),
-                                    backgroundColor: Colors.red,
-                                    duration: const Duration(seconds: 5),
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                        );
-                      },
-                    ),
                   ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                )
+              else
+                ...volunteers.map((volunteer) => ListTile(
+                  leading: const Icon(Icons.person_outline, color: Colors.blue),
+                  title: Text(volunteer['name']),
+                  subtitle: Text('${volunteer['phone']}\n${volunteer['address']}'),
+                  isThreeLine: true,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await LocalRequestService.updateRequestStatus(
+                      request['id'],
+                      'Approved',
+                      volunteerId: volunteer['id'],
+                    );
+                    await LocalVolunteerService.updateVolunteerStatus(
+                      volunteer['id'],
+                      'Assigned',
+                    );
+                    await _loadRequests();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Request approved! Volunteer ${volunteer['name']} assigned.',
+                          ),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  },
+                )).toList(),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
               ),
             ],
           ),
@@ -275,20 +242,8 @@ class _ApproveRequestsPageState extends State<ApproveRequestsPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             ElevatedButton.icon(
-                              onPressed: () async {
-                                await LocalRequestService.updateRequestStatus(
-                                  request['id'],
-                                  'Approved',
-                                );
-                                await _loadRequests();
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Request approved!'),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                }
+                              onPressed: () {
+                                _showVolunteerSelectionDialog(request);
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green,
