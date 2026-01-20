@@ -62,7 +62,7 @@ class _VolunteerListPageState extends State<VolunteerListPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Phone: ${volunteer['phone'] ?? 'N/A'}'),
-                            Text('Area: ${volunteer['area'] ?? 'N/A'}'),
+                            Text('Area: ${volunteer['address'] ?? 'N/A'}'),
                             Text('Status: ${volunteer['status'] ?? 'Available'}'),
                           ],
                         ),

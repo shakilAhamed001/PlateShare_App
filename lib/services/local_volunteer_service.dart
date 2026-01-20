@@ -62,6 +62,11 @@ class LocalVolunteerService {
     await _saveToStorage();
   }
 
+  static Future<List<Map<String, dynamic>>> getAllVolunteers() async {
+    await _loadFromStorage();
+    return List.from(_volunteers);
+  }
+
   static Future<List<Map<String, dynamic>>> getAvailableVolunteers() async {
     await _loadFromStorage();
     return _volunteers.where((v) => v['status'] == 'Available').toList();
