@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/pages/approve_requests.dart';
+import 'package:flutter_application_2/pages/volunteer_list_page.dart';
 import '../account/login.dart';
 
 class AdminPage extends StatefulWidget {
@@ -64,6 +65,19 @@ class _AdminPageState extends State<AdminPage> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const ApproveRequestsPage(),
+                  ),
+                );
+              },
+            ),
+            _buildActionCard(
+              icon: Icons.volunteer_activism,
+              title: 'Volunteer List',
+              subtitle: 'View all registered volunteers',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const VolunteerListPage(),
                   ),
                 );
               },
